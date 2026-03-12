@@ -62,7 +62,7 @@ launch_agent() {
   else
     tmux new-window -t "$SESSION" -n "$agent" -c "$root"
   fi
-  tmux send-keys -t "$SESSION:$agent" "$cli_cmd" Enter
+  tmux send-keys -t "$SESSION:$agent" "$cli_cmd; tmux kill-session -t $SESSION" Enter
   sleep 5
   tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
 }
