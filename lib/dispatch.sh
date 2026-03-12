@@ -59,7 +59,7 @@ info "All inboxes monitored."
       fi
 
       if [ -n "$nag" ]; then
-        tmux send-keys -t "muster:$agent" "WORKSPACE CHECK: $nag Clean up before continuing." Enter 2>/dev/null || true
+        tmux send-keys -t "muster:$agent" "NUDGE: $nag" Enter 2>/dev/null || true
       fi
     done
   done

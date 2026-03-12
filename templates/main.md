@@ -47,6 +47,16 @@ comms/<name>/
 
 Tasks do NOT live in inboxes. Inboxes are for direct messages only.
 
+## Nudges
+
+When you receive a **NUDGE**, stop what you're doing and:
+
+1. Check your inbox. Read everything.
+2. Clean your workspace — move completed active/ items to archive/, move read inbox/ items to archive/ or trash/.
+3. Resume work.
+
+A nudge is not a suggestion. It means your workspace is messy or you have unread messages. Handle it immediately.
+
 ## Inboxes — Direct Messages Only
 
 Inboxes are for communication, not task assignment:
