@@ -7,7 +7,7 @@ Assemble a team of AI agents with distinct characters, roles, and persistent mem
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ddnet-repo/muster/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ddnet-repo/muster/master/install.sh | sh
 ```
 
 Requires: `tmux`, `python3`, and either `inotifywait` (Linux) or `fswatch` (macOS).
