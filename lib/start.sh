@@ -80,9 +80,11 @@ done
 info "Waiting for agents to start..."
 sleep 8
 
-# Send initial prompts
+# Send initial prompts — type the message, then submit with Enter
 for agent in "${AGENTS[@]}"; do
-  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile and comms/main.md, then begin." Enter
+  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile and comms/main.md, then begin."
+  sleep 0.5
+  tmux send-keys -t "$SESSION:$agent" Enter
 done
 
 # Run dispatch in the background (no window)
