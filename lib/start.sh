@@ -63,8 +63,6 @@ launch_agent() {
     tmux new-window -t "$SESSION" -n "$agent" -c "$root"
   fi
   tmux send-keys -t "$SESSION:$agent" "$cli_cmd; tmux kill-session -t $SESSION" Enter
-  sleep 5
-  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
 }
 
 # Create the tmux session with monitor as window 0
@@ -74,6 +72,15 @@ tmux send-keys -t "$SESSION:monitor" "watch -n 5 '$MUSTER_ROOT/bin/muster status
 # Create agent windows
 for agent in "${AGENTS[@]}"; do
   launch_agent "$agent"
+done
+
+# Wait for all agents to boot
+info "Waiting for agents to start..."
+sleep 8
+
+# Send initial prompts
+for agent in "${AGENTS[@]}"; do
+  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
 done
 
 # Run dispatch in the background (no window)
