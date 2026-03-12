@@ -7,8 +7,8 @@ COMMS_DIR="$root/comms"
 mapfile -t AGENTS < <(get_agents)
 
 echo ""
-printf "  ${BOLD}%-16s %-10s %-10s %s${RESET}\n" "AGENT" "INBOX" "ACTIVE" "ROLE"
-printf "  %-16s %-10s %-10s %s\n" "----------------" "----------" "----------" "----------"
+echo -e "  ${BOLD}AGENT            INBOX      ACTIVE     ROLE${RESET}"
+echo "  ----------------  ---------- ---------- ----------"
 
 for agent in "${AGENTS[@]}"; do
   role="$(get_agent_field "$agent" "role")"
@@ -27,13 +27,12 @@ for agent in "${AGENTS[@]}"; do
     active_display="${GREEN}${active_count}${RESET}"
   fi
 
-  printf "  %-16s " "$agent"
-  printf "$inbox_display"
+  printf "  %-16s  " "$agent"
+  echo -en "$inbox_display"
   printf "          "
-  printf "$active_display"
+  echo -en "$active_display"
   printf "          "
-  printf "%s" "$role"
-  printf "\n"
+  printf "%s\n" "$role"
 done
 
 board_count="$(count_md "$COMMS_DIR/board")"
