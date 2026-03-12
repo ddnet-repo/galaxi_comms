@@ -83,6 +83,9 @@ tmux send-keys -t "$SESSION:monitor" "watch -n 5 '$MUSTER_ROOT/bin/muster status
 tmux new-window -t "$SESSION" -n "dispatch" -c "$root"
 tmux send-keys -t "$SESSION:dispatch" "'$LIB/dispatch.sh'" Enter
 
+# Keybind: Ctrl+b Q kills the whole muster session
+tmux bind-key -T prefix Q run-shell "'$MUSTER_ROOT/bin/muster' stop"
+
 # Configure status bar
 tmux set-option -t "$SESSION" status-right "#($STATUS_SCRIPT)"
 tmux set-option -t "$SESSION" status-interval 5
@@ -96,7 +99,8 @@ tmux select-window -t "$SESSION:${AGENTS[0]}"
 echo ""
 success "Muster launched: $SESSION"
 echo -e "${DIM}${#AGENTS[@]} agents + monitor + dispatch${RESET}"
-echo -e "${DIM}Attach with: tmux attach -t $SESSION${RESET}"
+echo -e "${DIM}Ctrl+b Q to kill the session${RESET}"
+echo -e "${DIM}Ctrl+b n/p to switch agents${RESET}"
 echo ""
 
 # Attach
