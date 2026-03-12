@@ -17,13 +17,6 @@ default_project="$(basename "$PWD")"
 read -rp "Project name [$default_project]: " project_name
 project_name="${project_name:-$default_project}"
 
-# --- What the team calls the user ---
-echo ""
-echo -e "${DIM}What should your agents call you?${RESET}"
-echo -e "${DIM}Examples: Commander, Boss, Vision Lord, Chief, Colonel${RESET}"
-read -rp "Your title: " user_title
-user_title="${user_title:-Boss}"
-
 # --- Which agent tool ---
 echo ""
 echo -e "${DIM}What CLI do your agents run? (e.g. opencode, claude, aider)${RESET}"
@@ -239,6 +232,13 @@ for i in "${!agent_names[@]}"; do
     *) agent_models+=("anthropic/claude-sonnet-4-6") ;;
   esac
 done
+
+# --- What the team calls the user ---
+echo ""
+echo -e "${DIM}What should your agents call you?${RESET}"
+echo -e "${DIM}Examples: Commander, Boss, Chief, Colonel, Captain${RESET}"
+read -rp "Your title: " user_title
+user_title="${user_title:-Boss}"
 
 # --- Build JSON ---
 agents_json="["

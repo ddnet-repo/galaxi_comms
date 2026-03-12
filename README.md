@@ -86,7 +86,6 @@ A character name carries more behavioral weight than three paragraphs of persona
 ```
 $ muster init
 Project name [my-app]: my-app
-Your title: Vision Lord
 Agent CLI command [opencode]: opencode
 
 --- Agent 1 ---

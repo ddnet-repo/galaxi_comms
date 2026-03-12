@@ -51,7 +51,7 @@ chmod +x "$STATUS_SCRIPT"
 
 # Launch an agent in a tmux window
 launch_agent() {
-  local agent="$1" create_session="$2"
+  local agent="$1" create_session="${2:-}"
   local model
   model="$(get_agent_field "$agent" "model")"
   local cli_cmd="$AGENT_CLI"
