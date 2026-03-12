@@ -32,12 +32,14 @@ IFS=',' read -ra AGENTS <<< "$AGENTS_STR"
 out=""
 for agent in "${AGENTS[@]}"; do
   inbox_dir="$COMMS_DIR/$agent/inbox"
-  count=0
-  [ -d "$inbox_dir" ] && count=$(find "$inbox_dir" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$count" -gt 0 ]; then
-    out+=" #[fg=yellow,bold]${agent}:${count}#[default] "
+  active_dir="$COMMS_DIR/$agent/active"
+  ic=0; ac=0
+  [ -d "$inbox_dir" ] && ic=$(find "$inbox_dir" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+  [ -d "$active_dir" ] && ac=$(find "$active_dir" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$ic" -gt 0 ] || [ "$ac" -gt 3 ]; then
+    out+=" #[fg=yellow,bold]${agent}:${ic}/${ac}#[default] "
   else
-    out+=" ${agent}:${count} "
+    out+=" ${agent}:${ic}/${ac} "
   fi
 done
 echo "$out"
