@@ -116,6 +116,7 @@ tmux set-option -t "$SESSION" window-status-current-style "bg=blue,fg=white,bold
 TITLE_SCREEN="$root/.muster-title.sh"
 {
   echo '#!/usr/bin/env bash'
+  echo "trap \"'$MUSTER_ROOT/bin/muster' stop; exit\" INT"
   echo 'clear'
   echo 'echo ""'
   echo 'echo -e "\033[1m  ╔══════════════════════════════════════════╗\033[0m"'
