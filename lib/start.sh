@@ -13,8 +13,8 @@ USER_TITLE="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['user
 command -v "$AGENT_CLI" &>/dev/null || die "$AGENT_CLI not found. Install it or update agent_cli in comms/team.json."
 SESSION="muster"
 
-# Kill existing session if any
-tmux kill-session -t "$SESSION" 2>/dev/null || true
+# Clean up any previous run (handles Ctrl+C / stale processes)
+"$LIB/stop.sh" 2>/dev/null || true
 
 # Read agents
 mapfile -t AGENTS < <(get_agents)
