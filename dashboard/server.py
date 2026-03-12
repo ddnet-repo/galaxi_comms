@@ -99,12 +99,12 @@ def get_pane_status(agent_name):
     """Capture the last few lines from an agent's tmux pane to infer status."""
     try:
         result = subprocess.run(
-            ["tmux", "capture-pane", "-t", f"muster:{agent_name}", "-p", "-l", "10"],
+            ["tmux", "capture-pane", "-t", f"muster:{agent_name}", "-p"],
             capture_output=True, text=True, timeout=2
         )
         if result.returncode != 0:
             return "offline"
-        lines = result.stdout.strip().splitlines()
+        lines = result.stdout.strip().splitlines()[-10:]
         # Walk from bottom up, find first classifiable line
         for line in reversed(lines):
             status = _classify_pane_line(line)

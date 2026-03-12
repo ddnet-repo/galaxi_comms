@@ -79,7 +79,7 @@ info "All inboxes monitored. Starting agent monitor."
 
 get_pane_last_line() {
   local agent="$1"
-  tmux capture-pane -t "$SESSION:$agent" -p -l 5 2>/dev/null |
+  tmux capture-pane -t "$SESSION:$agent" -p 2>/dev/null | tail -10 |
     sed 's/\x1b\[[0-9;]*m//g' |
     grep -v '^[[:space:]]*$' |
     tail -1 || echo ""
