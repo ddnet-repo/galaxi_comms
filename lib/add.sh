@@ -50,6 +50,11 @@ case "${model_choice:-1}" in
 esac
 
 echo ""
+echo -e "${DIM}Any special rules or exemptions for $agent_name? (optional, press enter to skip)${RESET}"
+echo -e "${DIM}Example: \"Can read any agent's inbox and active work. Reviews all commits.\"${RESET}"
+read -rp "Rules: " agent_rules
+
+echo ""
 read -rp "Is $agent_name the team lead? [y/N]: " is_lead
 is_lead="$(echo "${is_lead:-n}" | tr '[:upper:]' '[:lower:]')"
 lead_bool=$([ "$is_lead" = "y" ] && echo "true" || echo "false")
@@ -65,6 +70,7 @@ data['agents'].append({
     'character': '$agent_character',
     'autonomy': '$autonomy',
     'model': '$agent_model',
+    'rules': '$agent_rules',
     'lead': $lead_bool
 })
 with open('$TEAM_JSON', 'w') as f:
@@ -105,6 +111,7 @@ $workshopping
 ## Boundaries
 
 $boundary_note
+$([ -n "$agent_rules" ] && printf "\n## Special Rules\n\n%s" "$agent_rules")
 
 ## Loop Extensions
 

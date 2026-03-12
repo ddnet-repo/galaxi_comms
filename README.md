@@ -71,6 +71,8 @@ When the wizard asks "Who is this agent?" — be specific. The LLM already knows
 
 A character name carries more behavioral weight than three paragraphs of personality description. Pick someone whose energy matches the role.
 
+**Tip: pick characters who push back.** LLMs already want to please you — that's their default. If you pick characters who are helpful and agreeable (the A-Team, the Avengers, any "team of heroes who love their boss"), you're amplifying the exact sycophancy problem that makes AI output useless. Pick villains, rivals, divas, curmudgeons — characters with opinions who wouldn't just nod along. Darth Vader doesn't care if you like his code review. Sophia Petrillo isn't going to sugarcoat her feedback. Higgins thinks your code is beneath him. That friction is a feature. It's the only way you get honest output from a machine that's wired to agree with you.
+
 ## How the team works
 
 - **The board** (`comms/board/`) is the single source of truth for tasks. The lead owns it. Everyone reads it, only the lead writes to it. The lead coordinates — assigns tasks, unblocks people, and tells agents to clean up their workspace when things get messy.
@@ -117,3 +119,28 @@ Assigning models
 Done. 2 agent(s) configured for my-app.
 Run 'muster start' to launch your team.
 ```
+
+## Recipes
+
+Don't want to build a team from scratch? Pick a premade one during `muster init`:
+
+```
+How do you want to set up your team?
+  m) Manual — build from scratch
+  r) Recipe — choose a premade team
+[m/r]: r
+
+Available recipes:
+  a) Dark Side — Star Wars dark side themed team.
+  b) Star Trek Villains — Star Trek antagonist themed team.
+```
+
+You can also import from any JSON file:
+
+```
+muster init --from my-team.json
+```
+
+See `docs/recipes/` for the full writeups and `recipes/` for the JSON files.
+
+**Got a fun team?** Send a PR with a JSON file in `recipes/` and a writeup in `docs/recipes/`. We want to see what you come up with.
