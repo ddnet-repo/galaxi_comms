@@ -15,6 +15,7 @@ ${BOLD}Usage:${RESET}
   muster <command>
 
 ${BOLD}Commands:${RESET}
+  dashboard  Open the web dashboard (default port 4200)
   info       Show project setup and team roster
   init       Set up comms in the current project
   start      Launch all agent sessions in tmux
@@ -46,6 +47,7 @@ EOF
 }
 
 case "${1:-}" in
+  dashboard) shift; source "$LIB/dashboard.sh" "$@" ;;
   info)    source "$LIB/info.sh" ;;
   init)    shift; source "$LIB/init.sh" "$@" ;;
   start)   source "$LIB/start.sh" ;;
