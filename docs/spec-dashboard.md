@@ -137,6 +137,16 @@ Runs alongside `muster start`. Not a replacement for tmux — a companion.
 - Do we want to show the actual tmux output (terminal content) in the web UI? That's much harder but much cooler.
 - Authentication? Probably unnecessary for a local dev tool but worth considering if anyone runs it on a server.
 
+## Workspace Enforcement
+
+The dashboard should highlight workspace hygiene issues:
+
+- Agent cards turn red/warning when inbox > 3 or active > 3
+- A "nag" button to send a cleanup reminder to a specific agent
+- Timeline view shows when agents last cleaned up
+- Lead gets a summary of who's messy and who's clean
+- Eventually: auto-nag via dispatch (already implemented in CLI — every 5 min checks inbox/active counts and sends WORKSPACE CHECK messages to agents who are over limit)
+
 ## Not In Scope (Yet)
 
 - Mobile app

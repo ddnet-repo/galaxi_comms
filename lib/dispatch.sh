@@ -40,5 +40,29 @@ for agent in "${AGENTS[@]}"; do
 done
 
 echo ""
-info "All inboxes monitored. Ctrl+C to stop."
+info "All inboxes monitored."
+
+# Periodic workspace nag — check every 5 minutes
+(
+  while true; do
+    sleep 300
+    for agent in "${AGENTS[@]}"; do
+      inbox_count="$(count_md "$COMMS_DIR/$agent/inbox")"
+      active_count="$(count_md "$COMMS_DIR/$agent/active")"
+
+      nag=""
+      if [ "$inbox_count" -gt 3 ]; then
+        nag="You have $inbox_count items in your inbox. Read them, then move them to archive/ or trash/."
+      fi
+      if [ "$active_count" -gt 3 ]; then
+        nag="${nag:+$nag }You have $active_count items in active/. Max is 3. Finish, archive, or trash the rest."
+      fi
+
+      if [ -n "$nag" ]; then
+        tmux send-keys -t "muster:$agent" "WORKSPACE CHECK: $nag Clean up before continuing." Enter 2>/dev/null || true
+      fi
+    done
+  done
+) &
+
 wait

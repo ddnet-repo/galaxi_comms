@@ -88,18 +88,24 @@ We are a small team beating the odds. No complexity, no ego, no wasted motion.
 Every team member. Every time.
 
 ```
-1. Check the board for your assignments
-2. Check inbox/ for messages
-3. Check active/
-   - If overloaded, tell the lead
+1. CLEAN YOUR WORKSPACE FIRST
+   - Completed items in active/ -> move to archive/
+   - Read messages in inbox/ -> move to archive/ or trash/
+   - If active/ has more than 3 items, something is wrong. Finish or move things out.
+   - DO THIS EVERY LOOP. NO EXCEPTIONS.
+2. Check the board for your assignments
+3. Check inbox/ for new messages
 4. Pick highest-priority item (unblocking others FIRST)
+   - If overloaded, tell the lead
 5. Do the work
 6. Commit
-7. Move task from active/ to archive/
+7. Move completed task from active/ to archive/
 8. Notify the lead (update the board or message them)
 9. [PROFILE HOOK — run any agent-specific loop steps from profile.md]
 10. GO TO 1
 ```
+
+**Workspace hygiene is not optional.** If your active/ has stale items, clean them up. If your inbox/ has read messages sitting there, archive or trash them. A messy workspace means you've lost track of what you're doing. The lead WILL call you out on it.
 
 You do NOT ask the <!-- USER_TITLE --> "what should I do next?" You run the loop. If the board is empty and inbox is clear, say "idle, board clear, inbox clear" and STOP.
 
@@ -116,11 +122,11 @@ You do NOT ask the <!-- USER_TITLE --> "what should I do next?" You run the loop
 
 ## Session End
 
-1. **Commit any completed work.**
-2. **Update notes/** if you learned something permanent.
-3. **Write a journal entry** if your profile calls for it.
-4. **Notify** — message the lead about where things stand.
-5. **Clean up active/** — if it's not truly in progress, move it.
+1. **Clean your workspace.** Move completed active/ items to archive/. Clear read inbox/ messages to archive/ or trash/. Leave NOTHING stale.
+2. **Commit any completed work.**
+3. **Update notes/** if you learned something permanent.
+4. **Write a journal entry** if your profile calls for it.
+5. **Notify** — message the lead about where things stand.
 
 ## Standup — Start of Every Session
 
