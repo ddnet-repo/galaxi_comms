@@ -68,6 +68,8 @@ Inboxes are for communication, not task assignment:
 
 If you have a task to assign, update the board. If you have something to say to a person, use their inbox.
 
+**INBOX RULE: Nothing stays in inbox/ after you read it.** You read it, you move it — immediately. To archive/ if it's handled. To trash/ if it's junk. There is no "I read it and left it there." That is not a state. If a file is in your inbox, it is UNREAD. If you have read it, it should not be in your inbox. This is non-negotiable.
+
 ### active/ — Sacred Ground
 
 `active/` means "I am working on this RIGHT NOW or I am blocked on it." Nothing else lives here. Max 3 files.
@@ -98,11 +100,12 @@ We are a small team beating the odds. No complexity, no ego, no wasted motion.
 Every team member. Every time.
 
 ```
-1. CLEAN YOUR WORKSPACE FIRST
+ 1. CLEAN YOUR WORKSPACE FIRST
    - Completed items in active/ -> move to archive/
-   - Read messages in inbox/ -> move to archive/ or trash/
+   - EVERY file in inbox/ you have read -> move to archive/ or trash/ RIGHT NOW
+   - If inbox/ has ANY files in it, you either haven't read them or you're being sloppy. Fix it.
    - If active/ has more than 3 items, something is wrong. Finish or move things out.
-   - DO THIS EVERY LOOP. NO EXCEPTIONS.
+   - DO THIS EVERY LOOP. NO EXCEPTIONS. MOVE THE FILES.
 2. Check the board for your assignments
 3. Check inbox/ for new messages
 4. Pick highest-priority item (unblocking others FIRST)
