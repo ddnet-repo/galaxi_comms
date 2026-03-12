@@ -9,6 +9,7 @@ COMMS_DIR="$root/comms"
 TEAM_JSON="$COMMS_DIR/team.json"
 PROJECT="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['project'])")"
 AGENT_CLI="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['agent_cli'])")"
+USER_TITLE="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['user_title'])")"
 command -v "$AGENT_CLI" &>/dev/null || die "$AGENT_CLI not found. Install it or update agent_cli in comms/team.json."
 SESSION="muster"
 
@@ -69,7 +70,6 @@ launch_agent() {
 
 # Create the tmux session with monitor as window 0
 tmux new-session -d -s "$SESSION" -n "monitor" -c "$root"
-tmux send-keys -t "$SESSION:monitor" "watch -n 5 '$MUSTER_ROOT/bin/muster status'" Enter
 
 # Create agent windows
 for agent in "${AGENTS[@]}"; do
@@ -109,6 +109,41 @@ tmux set-option -t "$SESSION" status-interval 5
 tmux set-option -t "$SESSION" status-right-length 140
 tmux set-option -t "$SESSION" status-style "bg=black,fg=white"
 tmux set-option -t "$SESSION" window-status-current-style "bg=blue,fg=white,bold"
+
+# Build title screen for monitor
+TITLE_SCREEN="$root/.muster-title.sh"
+{
+  echo '#!/usr/bin/env bash'
+  echo 'clear'
+  echo 'echo ""'
+  echo 'echo -e "\033[1m  ╔══════════════════════════════════════════╗\033[0m"'
+  echo 'echo -e "\033[1m  ║             m u s t e r                  ║\033[0m"'
+  echo 'echo -e "\033[1m  ╚══════════════════════════════════════════╝\033[0m"'
+  echo 'echo ""'
+  echo "echo -e \"  \033[1mProject:\033[0m  $PROJECT\""
+  echo "echo -e \"  \033[1mTitle:\033[0m    $USER_TITLE\""
+  echo "echo -e \"  \033[1mCLI:\033[0m      $AGENT_CLI\""
+  echo "echo -e \"  \033[1mAgents:\033[0m   ${#AGENTS[@]}\""
+  echo 'echo ""'
+  echo 'echo -e "  \033[1mTeam\033[0m"'
+  echo 'echo -e "  \033[2m──────────────────────────────────────────\033[0m"'
+  for agent in "${AGENTS[@]}"; do
+    role="$(get_agent_field "$agent" "role")"
+    lead="$(get_agent_field "$agent" "lead")"
+    lead_tag=""
+    [ "$lead" = "True" ] && lead_tag=" \033[1;33m(lead)\033[0m"
+    echo "echo -e \"  \033[1m${agent}\033[0m — ${role}${lead_tag}\""
+  done
+  echo 'echo ""'
+  echo "echo -e \"  \033[0;36mDashboard: http://localhost:${DASHBOARD_PORT}\033[0m\""
+  echo 'echo ""'
+  echo 'echo -e "  \033[2mCtrl+b Q   kill session\033[0m"'
+  echo 'echo -e "  \033[2mCtrl+b n/p switch agents\033[0m"'
+  echo 'echo ""'
+  echo 'read -r -p ""'
+} > "$TITLE_SCREEN"
+chmod +x "$TITLE_SCREEN"
+tmux send-keys -t "$SESSION:monitor" "bash '$TITLE_SCREEN'" Enter
 
 # Jump to monitor (window 0)
 tmux select-window -t "$SESSION:monitor"
