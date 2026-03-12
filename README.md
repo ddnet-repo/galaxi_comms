@@ -28,7 +28,7 @@ muster remove     # remove one
 
 Asks you:
 - Project name
-- What your agents should call you (Commander, Boss, Vision Lord, etc.)
+- What your agents should call you (Commander, Boss, Your Excellency, etc.)
 - Which CLI your agents run (opencode, claude, aider, etc.)
 - For each agent: codename, what they do, who they are, autonomy level
 - Which agent is the lead (coordinates tasks, manages the board, doesn't code)
