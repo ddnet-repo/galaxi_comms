@@ -64,32 +64,45 @@ import re
 
 _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07')
 
+# Lines that are opencode TUI chrome — not real content
+_CHROME_PATTERNS = [
+    'ctrl+t', 'ctrl+p', 'tab agents', 'variants', 'commands',
+    'build ', 'anthropic', 'openai', 'google',
+    '╹', '╻', '┃', '┏', '┗', '┓', '┛', '▀', '▄', '█',
+    'tip:', 'press ctrl',
+]
+
+
+def _is_chrome(line):
+    """Check if a line is opencode TUI chrome (not real content)."""
+    low = line.lower()
+    # Mostly box-drawing or decorative
+    stripped = re.sub(r'[│┃╹╻┏┗┓┛▀▄▣█▐▌─━═┈┉\s]', '', line)
+    if not stripped:
+        return True
+    if any(p in low for p in _CHROME_PATTERNS):
+        return True
+    return False
+
+
 def _classify_pane_line(line):
     """Try to classify a raw pane line into a human-readable status."""
     line = _ANSI_RE.sub('', line).strip()
     if not line:
         return None
+    if _is_chrome(line):
+        return None
     low = line.lower()
+    # Tool use indicators (opencode shows these when agent is working)
+    if low.startswith('→') or low.startswith('->'):
+        # e.g. "→ Read comms/board" or "→ Write src/foo.ts"
+        return line[:80]
     # Common opencode / agent CLI patterns
     if any(k in low for k in ['thinking', 'reasoning']):
         return 'thinking'
-    if any(k in low for k in ['writing', 'write ', 'creating']):
-        return 'writing'
-    if any(k in low for k in ['reading', 'read ']):
-        return 'reading'
-    if any(k in low for k in ['running', 'executing', 'exec ']):
-        return 'running command'
-    if any(k in low for k in ['searching', 'grep', 'glob', 'finding']):
-        return 'searching'
-    if any(k in low for k in ['compiling', 'building', 'build ']):
-        return 'building'
-    if any(k in low for k in ['testing', 'test ']):
-        return 'testing'
-    if any(k in low for k in ['commit', 'pushing', 'git ']):
-        return 'committing'
-    if any(k in low for k in ['idle', 'standing down', 'done', 'board clear']):
+    if any(k in low for k in ['idle', 'standing down', 'board clear', 'waiting for direction']):
         return 'done'
-    if any(k in low for k in ['blocked', 'waiting']):
+    if any(k in low for k in ['blocked', 'waiting on']):
         return 'blocked'
     # Return cleaned line truncated
     return line[:80]
@@ -104,8 +117,8 @@ def get_pane_status(agent_name):
         )
         if result.returncode != 0:
             return "offline"
-        lines = result.stdout.strip().splitlines()[-10:]
-        # Walk from bottom up, find first classifiable line
+        lines = result.stdout.strip().splitlines()
+        # Walk from bottom up, skip chrome, find real content
         for line in reversed(lines):
             status = _classify_pane_line(line)
             if status:
