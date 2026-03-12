@@ -94,13 +94,19 @@ DASHBOARD_PORT=4200
 python3 "$MUSTER_ROOT/dashboard/server.py" "$DASHBOARD_PORT" &>/dev/null &
 echo $! > "$root/.muster-dashboard.pid"
 
+# Wait a moment for the server to bind and write its port file
+sleep 1
+if [ -f "$root/.muster-dashboard-port" ]; then
+  DASHBOARD_PORT="$(cat "$root/.muster-dashboard-port")"
+fi
+
 # Keybind: Ctrl+b Q kills the whole muster session
 tmux bind-key -T prefix Q run-shell "'$MUSTER_ROOT/bin/muster' stop"
 
-# Configure status bar
-tmux set-option -t "$SESSION" status-right "#($STATUS_SCRIPT)"
+# Configure status bar — show agent counts + dashboard URL
+tmux set-option -t "$SESSION" status-right "#($STATUS_SCRIPT) | :$DASHBOARD_PORT"
 tmux set-option -t "$SESSION" status-interval 5
-tmux set-option -t "$SESSION" status-right-length 120
+tmux set-option -t "$SESSION" status-right-length 140
 tmux set-option -t "$SESSION" status-style "bg=black,fg=white"
 tmux set-option -t "$SESSION" window-status-current-style "bg=blue,fg=white,bold"
 

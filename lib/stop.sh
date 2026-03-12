@@ -16,6 +16,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
       kill "$(cat "$root/.muster-dashboard.pid")" 2>/dev/null
       rm -f "$root/.muster-dashboard.pid"
     fi
+    rm -f "$root/.muster-dashboard-port"
   fi
   success "Muster stopped."
 else

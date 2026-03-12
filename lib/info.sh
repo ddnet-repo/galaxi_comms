@@ -21,6 +21,10 @@ else
 fi
 echo -e "  ${BOLD}Title:${RESET}  $user_title"
 echo -e "  ${BOLD}CLI:${RESET}    $agent_cli"
+if [ -f "$root/.muster-dashboard-port" ]; then
+  dash_port="$(cat "$root/.muster-dashboard-port")"
+  echo -e "  ${BOLD}Dashboard:${RESET} ${CYAN}http://localhost:${dash_port}${RESET}"
+fi
 echo ""
 echo -e "  ${BOLD}AGENT            MODEL                          ROLE${RESET}"
 echo "  ---------------  -----------------------------  ----------"

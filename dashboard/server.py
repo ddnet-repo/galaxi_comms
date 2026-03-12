@@ -19,11 +19,12 @@ def find_comms_root(start=None):
         d = d.parent
     return None
 
-ROOT = find_comms_root()
-if not ROOT:
+_root = find_comms_root()
+if not _root:
     print("No muster project found. Run 'muster init' first.")
     sys.exit(1)
 
+ROOT: Path = _root
 COMMS = ROOT / "comms"
 TEAM_JSON = COMMS / "team.json"
 
@@ -59,20 +60,57 @@ def list_md(directory):
     return result
 
 
+import re
+
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07')
+
+def _classify_pane_line(line):
+    """Try to classify a raw pane line into a human-readable status."""
+    line = _ANSI_RE.sub('', line).strip()
+    if not line:
+        return None
+    low = line.lower()
+    # Common opencode / agent CLI patterns
+    if any(k in low for k in ['thinking', 'reasoning']):
+        return 'thinking'
+    if any(k in low for k in ['writing', 'write ', 'creating']):
+        return 'writing'
+    if any(k in low for k in ['reading', 'read ']):
+        return 'reading'
+    if any(k in low for k in ['running', 'executing', 'exec ']):
+        return 'running command'
+    if any(k in low for k in ['searching', 'grep', 'glob', 'finding']):
+        return 'searching'
+    if any(k in low for k in ['compiling', 'building', 'build ']):
+        return 'building'
+    if any(k in low for k in ['testing', 'test ']):
+        return 'testing'
+    if any(k in low for k in ['commit', 'pushing', 'git ']):
+        return 'committing'
+    if any(k in low for k in ['idle', 'standing down', 'done', 'board clear']):
+        return 'done'
+    if any(k in low for k in ['blocked', 'waiting']):
+        return 'blocked'
+    # Return cleaned line truncated
+    return line[:80]
+
+
 def get_pane_status(agent_name):
     """Capture the last few lines from an agent's tmux pane to infer status."""
     try:
         result = subprocess.run(
-            ["tmux", "capture-pane", "-t", f"muster:{agent_name}", "-p", "-l", "5"],
+            ["tmux", "capture-pane", "-t", f"muster:{agent_name}", "-p", "-l", "10"],
             capture_output=True, text=True, timeout=2
         )
         if result.returncode != 0:
             return "offline"
-        lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
-        if not lines:
-            return "idle"
-        last = lines[-1][:120]
-        return last
+        lines = result.stdout.strip().splitlines()
+        # Walk from bottom up, find first classifiable line
+        for line in reversed(lines):
+            status = _classify_pane_line(line)
+            if status:
+                return status
+        return "idle"
     except Exception:
         return "offline"
 
@@ -655,13 +693,31 @@ def main():
         except ValueError:
             pass
 
-    server = HTTPServer(("127.0.0.1", port), DashboardHandler)
+    # Try up to 10 ports if the requested one is taken
+    server = None
+    for attempt in range(10):
+        try:
+            server = HTTPServer(("127.0.0.1", port + attempt), DashboardHandler)
+            port = port + attempt
+            break
+        except OSError:
+            continue
+
+    if not server:
+        print(f"Could not bind to any port in range {port}-{port + 9}")
+        sys.exit(1)
+
+    # Write actual port to file so other commands can find it
+    port_file = ROOT / ".muster-dashboard-port"
+    port_file.write_text(str(port))
+
     print(f"\n  muster dashboard running at http://localhost:{port}\n")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\n  dashboard stopped.\n")
         server.server_close()
+        port_file.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
