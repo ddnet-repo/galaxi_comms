@@ -67,21 +67,18 @@ launch_agent() {
   tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
 }
 
-# Create the tmux session with first agent
-launch_agent "${AGENTS[0]}" "new"
+# Create the tmux session with monitor as window 0
+tmux new-session -d -s "$SESSION" -n "monitor" -c "$root"
+tmux send-keys -t "$SESSION:monitor" "watch -n 5 '$MUSTER_ROOT/bin/muster status'" Enter
 
-# Create windows for remaining agents
-for agent in "${AGENTS[@]:1}"; do
+# Create agent windows
+for agent in "${AGENTS[@]}"; do
   launch_agent "$agent"
 done
 
-# Create monitor window
-tmux new-window -t "$SESSION" -n "monitor" -c "$root"
-tmux send-keys -t "$SESSION:monitor" "watch -n 5 '$MUSTER_ROOT/bin/muster status'" Enter
-
-# Create dispatch window
-tmux new-window -t "$SESSION" -n "dispatch" -c "$root"
-tmux send-keys -t "$SESSION:dispatch" "'$LIB/dispatch.sh'" Enter
+# Run dispatch in the background (no window)
+"$LIB/dispatch.sh" &
+echo $! > "$root/.muster-dispatch.pid"
 
 # Keybind: Ctrl+b Q kills the whole muster session
 tmux bind-key -T prefix Q run-shell "'$MUSTER_ROOT/bin/muster' stop"
@@ -93,8 +90,8 @@ tmux set-option -t "$SESSION" status-right-length 120
 tmux set-option -t "$SESSION" status-style "bg=black,fg=white"
 tmux set-option -t "$SESSION" window-status-current-style "bg=blue,fg=white,bold"
 
-# Jump to first agent window
-tmux select-window -t "$SESSION:${AGENTS[0]}"
+# Jump to monitor (window 0)
+tmux select-window -t "$SESSION:monitor"
 
 echo ""
 success "Muster launched: $SESSION"
