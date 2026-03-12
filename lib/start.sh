@@ -89,6 +89,11 @@ done
 "$LIB/dispatch.sh" &
 echo $! > "$root/.muster-dispatch.pid"
 
+# Launch dashboard in the background
+DASHBOARD_PORT=4200
+python3 "$MUSTER_ROOT/dashboard/server.py" "$DASHBOARD_PORT" &>/dev/null &
+echo $! > "$root/.muster-dashboard.pid"
+
 # Keybind: Ctrl+b Q kills the whole muster session
 tmux bind-key -T prefix Q run-shell "'$MUSTER_ROOT/bin/muster' stop"
 
@@ -105,6 +110,7 @@ tmux select-window -t "$SESSION:monitor"
 echo ""
 success "Muster launched: $SESSION"
 echo -e "${DIM}${#AGENTS[@]} agents + monitor + dispatch${RESET}"
+echo -e "${CYAN}Dashboard: http://localhost:${DASHBOARD_PORT}${RESET}"
 echo -e "${DIM}Ctrl+b Q to kill the session${RESET}"
 echo -e "${DIM}Ctrl+b n/p to switch agents${RESET}"
 echo ""

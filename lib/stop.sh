@@ -12,6 +12,10 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
       kill "$(cat "$root/.muster-dispatch.pid")" 2>/dev/null
       rm -f "$root/.muster-dispatch.pid"
     fi
+    if [ -f "$root/.muster-dashboard.pid" ]; then
+      kill "$(cat "$root/.muster-dashboard.pid")" 2>/dev/null
+      rm -f "$root/.muster-dashboard.pid"
+    fi
   fi
   success "Muster stopped."
 else
