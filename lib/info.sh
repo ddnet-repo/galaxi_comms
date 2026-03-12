@@ -14,6 +14,11 @@ echo ""
 echo -e "${BOLD}$project${RESET}"
 echo -e "${DIM}$root${RESET}"
 echo ""
+if tmux has-session -t muster 2>/dev/null; then
+  echo -e "  ${BOLD}Status:${RESET} ${GREEN}running${RESET}"
+else
+  echo -e "  ${BOLD}Status:${RESET} ${DIM}stopped${RESET}"
+fi
 echo -e "  ${BOLD}Title:${RESET}  $user_title"
 echo -e "  ${BOLD}CLI:${RESET}    $agent_cli"
 echo ""
