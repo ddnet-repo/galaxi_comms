@@ -22,6 +22,7 @@ ${BOLD}Commands:${RESET}
   add        Add a team member
   remove     Remove a team member
   reset      Wipe comms/ and start over
+  upgrade    Pull the latest version
   version    Print version
 
 ${BOLD}Quick start:${RESET}
@@ -51,6 +52,7 @@ case "${1:-}" in
   add)     shift; source "$LIB/add.sh" "$@" ;;
   remove)  shift; source "$LIB/remove.sh" "$@" ;;
   reset)   source "$LIB/reset.sh" ;;
+  upgrade) source "$LIB/upgrade.sh" ;;
   version) echo "muster $MUSTER_VERSION" ;;
   -h|--help|"") usage ;;
   *)       die "Unknown command: $1. Run 'muster --help' for usage." ;;
