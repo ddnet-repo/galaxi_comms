@@ -28,10 +28,7 @@ kill_dispatch() {
   pkill -f "dispatch.sh" 2>/dev/null || true
 }
 
-if tmux has-session -t "$SESSION" 2>/dev/null; then
-  tmux kill-session -t "$SESSION"
-fi
-
+# Kill background processes BEFORE tmux (since stop may be running inside tmux)
 kill_dashboard
 kill_dispatch
 
@@ -40,6 +37,11 @@ if [ -n "$root" ]; then
   rm -f "$root/.muster-dashboard-port"
   rm -f "$root/.muster-title.sh"
   rm -rf "$root/.muster-dispatch-state"
+fi
+
+# Kill tmux session last — this may kill us too if we're running inside it
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  tmux kill-session -t "$SESSION"
 fi
 
 success "Muster stopped."
