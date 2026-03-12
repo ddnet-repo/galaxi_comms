@@ -138,6 +138,21 @@ send_nag() {
   sleep 30
 
   while true; do
+    # Sprint done? Board empty + all agents clear → stop monitoring
+    board_count="$(count_md "$COMMS_DIR/board")"
+    all_done=true
+    for agent in "${AGENTS[@]}"; do
+      ic="$(count_md "$COMMS_DIR/$agent/inbox")"
+      ac="$(count_md "$COMMS_DIR/$agent/active")"
+      if [ "$ic" -gt 0 ] || [ "$ac" -gt 0 ]; then
+        all_done=false
+        break
+      fi
+    done
+    if [ "$board_count" -eq 0 ] && [ "$all_done" = true ]; then
+      break
+    fi
+
     for agent in "${AGENTS[@]}"; do
       inbox_count="$(count_md "$COMMS_DIR/$agent/inbox")"
       active_count="$(count_md "$COMMS_DIR/$agent/active")"
