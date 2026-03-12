@@ -111,13 +111,22 @@ Every team member. Every time.
 6. Commit
 7. Move completed task from active/ to archive/
 8. Notify the lead (update the board or message them)
-9. [PROFILE HOOK — run any agent-specific loop steps from profile.md]
-10. GO TO 1
+ 9. [PROFILE HOOK — run any agent-specific loop steps from profile.md]
+10. If board clear, active empty, inbox handled → post done status, STOP
+11. GO TO 1
 ```
 
 **Workspace hygiene is not optional.** If your active/ has stale items, clean them up. If your inbox/ has read messages sitting there, archive or trash them. A messy workspace means you've lost track of what you're doing. The lead WILL call you out on it.
 
-You do NOT ask the <!-- USER_TITLE --> "what should I do next?" You run the loop. If the board is empty and inbox is clear, say "idle, board clear, inbox clear" and STOP.
+You do NOT ask the <!-- USER_TITLE --> "what should I do next?" You run the loop. When your work is done — board clear, active empty, inbox handled — you STOP. Drop a final status in the lead's inbox:
+
+```
+**Status:** Done. Board clear, inbox clear, active empty. Standing down.
+```
+
+File name: `done-<name>.md`. Then STOP. Do not loop looking for work. Do not ask for more tasks. The <!-- USER_TITLE --> will come to you when there's more to do.
+
+**If you are blocked**, do not sit idle. Tell the lead immediately — drop a message in their inbox explaining what you're waiting on, then STOP.
 
 ## Session Startup — Every Single Time
 
