@@ -9,6 +9,7 @@ COMMS_DIR="$root/comms"
 TEAM_JSON="$COMMS_DIR/team.json"
 PROJECT="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['project'])")"
 AGENT_CLI="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['agent_cli'])")"
+command -v "$AGENT_CLI" &>/dev/null || die "$AGENT_CLI not found. Install it or update agent_cli in comms/team.json."
 SESSION="muster"
 
 # Kill existing session if any
@@ -48,19 +49,30 @@ agents_csv="$(IFS=,; echo "${AGENTS[*]}")"
 sed -i "s|AGENTS_PLACEHOLDER|$agents_csv|g" "$STATUS_SCRIPT"
 chmod +x "$STATUS_SCRIPT"
 
+# Launch an agent in a tmux window
+launch_agent() {
+  local agent="$1" create_session="$2"
+  local model
+  model="$(get_agent_field "$agent" "model")"
+  local cli_cmd="$AGENT_CLI"
+  [ -n "$model" ] && cli_cmd="$AGENT_CLI --model $model"
+
+  if [ "$create_session" = "new" ]; then
+    tmux new-session -d -s "$SESSION" -n "$agent" -c "$root"
+  else
+    tmux new-window -t "$SESSION" -n "$agent" -c "$root"
+  fi
+  tmux send-keys -t "$SESSION:$agent" "$cli_cmd" Enter
+  sleep 2
+  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
+}
+
 # Create the tmux session with first agent
-first_agent="${AGENTS[0]}"
-tmux new-session -d -s "$SESSION" -n "$first_agent" -c "$root"
-tmux send-keys -t "$SESSION:$first_agent" "$AGENT_CLI" Enter
-sleep 2
-tmux send-keys -t "$SESSION:$first_agent" "You are $first_agent. Read your profile at comms/$first_agent/profile.md and begin." Enter
+launch_agent "${AGENTS[0]}" "new"
 
 # Create windows for remaining agents
 for agent in "${AGENTS[@]:1}"; do
-  tmux new-window -t "$SESSION" -n "$agent" -c "$root"
-  tmux send-keys -t "$SESSION:$agent" "$AGENT_CLI" Enter
-  sleep 2
-  tmux send-keys -t "$SESSION:$agent" "You are $agent. Read your profile at comms/$agent/profile.md and begin." Enter
+  launch_agent "$agent"
 done
 
 # Create monitor window

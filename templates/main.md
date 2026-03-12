@@ -174,4 +174,4 @@ Format:
 Longer description if needed.
 ```
 
-The lead does not commit code. They write plans.
+The lead coordinates. They manage the board, keep the team unblocked, and make sure everyone's workspace is clean. The lead does not write code.

@@ -10,7 +10,7 @@ Assemble a team of AI agents with distinct characters, roles, and persistent mem
 curl -fsSL https://raw.githubusercontent.com/ddnet-repo/muster/master/install.sh | sh
 ```
 
-Requires: `tmux`, `python3`, and either `inotifywait` (Linux) or `fswatch` (macOS).
+Requires: `tmux`, `python3`, `inotifywait` (from `inotify-tools`), and an agent CLI like [opencode](https://github.com/anomalyco/opencode). Linux only.
 
 ## Usage
 
@@ -30,7 +30,9 @@ Asks you:
 - Project name
 - What your agents should call you (Commander, Boss, Vision Lord, etc.)
 - Which CLI your agents run (opencode, claude, aider, etc.)
-- For each agent: codename, what they do, who they are, autonomy level, whether they're the lead
+- For each agent: codename, what they do, who they are, autonomy level
+- Which agent is the lead (coordinates tasks, manages the board, doesn't code)
+- Models per agent (opus for lead/content, sonnet for coding — sensible defaults)
 
 Then it generates:
 ```
@@ -71,7 +73,7 @@ A character name carries more behavioral weight than three paragraphs of persona
 
 ## How the team works
 
-- **The board** (`comms/board/`) is the single source of truth for tasks. The lead owns it. Everyone reads it, only the lead writes to it. The lead organizes it however they want.
+- **The board** (`comms/board/`) is the single source of truth for tasks. The lead owns it. Everyone reads it, only the lead writes to it. The lead coordinates — assigns tasks, unblocks people, and tells agents to clean up their workspace when things get messy.
 - **Inboxes** are for direct messages — questions, pushback, FYIs. Not task assignment.
 - **The loop** — every agent follows the same cycle: check board, check inbox, pick highest priority (unblocking others first), do the work, commit, notify, repeat. They never ask "what should I do next?"
 - **Notes** persist across sessions. Gotchas, patterns, things that burned you. Loaded every startup.
@@ -90,19 +92,28 @@ Codename: arc
 What does arc do? architecture, planning, task management
 Who is arc? Sun Tzu, the ancient Chinese military strategist who wrote The Art of War
 Autonomy [1/2/3, default 2]: 1
-Is arc the team lead? [y/N]: y
+
+2 agent(s) so far: arc
+[a]dd another or [d]one? a
 
 --- Agent 2 ---
 Codename: forge
 What does forge do? backend, databases, APIs
 Who is forge? Hephaestus, the Greek god of the forge who built weapons for the gods
 Autonomy [1/2/3, default 2]: 1
-Is forge the team lead? [y/N]: n
+
+2 agent(s) so far: arc forge
+[a]dd another or [d]one? d
+
+Which agent is the lead?
+  a) arc — architecture, planning, task management
+  b) forge — backend, databases, APIs
+Lead [a]: a
+
+Assigning models
+  arc [default 2]: 2          <- opus (lead)
+  forge [default 1]: 1        <- sonnet (worker)
 
 Done. 2 agent(s) configured for my-app.
 Run 'muster start' to launch your team.
-
-$ muster start
-Muster launched: muster
-2 agents + monitor + dispatch
 ```

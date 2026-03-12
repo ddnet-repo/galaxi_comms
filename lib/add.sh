@@ -40,6 +40,16 @@ case "${autonomy_choice:-2}" in
 esac
 
 echo ""
+echo -e "${DIM}Which model should $agent_name use?${RESET}"
+echo "  1) anthropic/claude-sonnet-4-6 (default)"
+echo "  2) anthropic/claude-opus-4-6"
+read -rp "Model [1/2]: " model_choice
+case "${model_choice:-1}" in
+  2) agent_model="anthropic/claude-opus-4-6" ;;
+  *) agent_model="anthropic/claude-sonnet-4-6" ;;
+esac
+
+echo ""
 read -rp "Is $agent_name the team lead? [y/N]: " is_lead
 is_lead="$(echo "${is_lead:-n}" | tr '[:upper:]' '[:lower:]')"
 lead_bool=$([ "$is_lead" = "y" ] && echo "true" || echo "false")
@@ -54,6 +64,7 @@ data['agents'].append({
     'role': '$agent_role',
     'character': '$agent_character',
     'autonomy': '$autonomy',
+    'model': '$agent_model',
     'lead': $lead_bool
 })
 with open('$TEAM_JSON', 'w') as f:
@@ -66,7 +77,7 @@ mkdir -p "$agent_dir"/{inbox,active,archive,trash,notes,journal}
 
 if [ "$is_lead" = "y" ]; then
   workshopping="Yes — this is the primary brainstorming partner. Workshops with the $user_title directly."
-  boundary_note="You manage comms/board/. You do NOT write code. You write plans, specs, and assign work."
+  boundary_note="You own comms/board/ and comms/docs/. You coordinate the team — assign tasks, unblock people, and keep everyone's workspace clean. If someone's inbox is piling up or active/ is stale, tell them to sort it out. You do NOT write code."
 else
   workshopping="No — executes tasks, routes questions through inboxes or the board."
   boundary_note="Stay in your lane. If something is outside your role, drop it on the board or message the lead."

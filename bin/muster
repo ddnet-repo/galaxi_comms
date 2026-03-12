@@ -2,7 +2,7 @@
 # Muster — assemble your AI agent team
 set -euo pipefail
 
-MUSTER_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MUSTER_ROOT="$(cd "$(dirname "$(readlink -f "$0")")" && cd .. && pwd)"
 LIB="$MUSTER_ROOT/lib"
 
 source "$LIB/common.sh"
@@ -23,6 +23,22 @@ ${BOLD}Commands:${RESET}
   remove     Remove a team member
   reset      Wipe comms/ and start over
   version    Print version
+
+${BOLD}Quick start:${RESET}
+  cd your-project
+  muster init          # wizard: name agents, pick characters, choose a lead
+  muster start         # opens tmux with one window per agent + monitor + dispatch
+  ${DIM}Ctrl+b n / Ctrl+b p to flip between agents${RESET}
+  ${DIM}Ctrl+b <number> to jump to a specific agent${RESET}
+  muster stop          # kills the tmux session when you're done
+
+${BOLD}How it works:${RESET}
+  The lead manages comms/board/ (task board). Workers check the board,
+  pick up tasks, do the work, commit, and report back. Everyone talks
+  through inboxes (comms/<name>/inbox/). The lead keeps things moving
+  and tells people to clean up their workspace when it gets messy.
+
+${BOLD}Requires:${RESET} tmux, python3, inotifywait (from inotify-tools), opencode (or your agent CLI)
 
 EOF
 }

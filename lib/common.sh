@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-MUSTER_VERSION="0.1.0"
+MUSTER_VERSION="0.1.1"
 
 # Colors
 RED='\033[0;31m'

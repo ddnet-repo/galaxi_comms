@@ -30,23 +30,31 @@ echo -e "${DIM}What CLI do your agents run? (e.g. opencode, claude, aider)${RESE
 read -rp "Agent CLI command [opencode]: " agent_cli
 agent_cli="${agent_cli:-opencode}"
 
+if ! command -v "$agent_cli" &>/dev/null; then
+  die "$agent_cli not found. Install it first or specify a different CLI."
+fi
+
 # --- Team members ---
 echo ""
 echo -e "${BOLD}Now let's build your team.${RESET}"
+echo -e "${DIM}5 is the sweet spot. You can add up to 100 if you hate yourself.${RESET}"
 echo ""
 
-agents_json="["
-agent_count=0
+# Collect agents into parallel arrays
+declare -a agent_names=()
+declare -a agent_roles=()
+declare -a agent_characters=()
+declare -a agent_autonomies=()
 
 while true; do
-  echo -e "${BOLD}--- Agent $((agent_count + 1)) ---${RESET}"
+  echo -e "${BOLD}--- Agent $((${#agent_names[@]} + 1)) ---${RESET}"
   echo ""
 
   # Codename
-  read -rp "Codename (short, lowercase, no spaces): " agent_name
-  agent_name="$(echo "$agent_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
-  if [ -z "$agent_name" ]; then
-    if [ "$agent_count" -eq 0 ]; then
+  read -rp "Codename (short, lowercase, no spaces): " aname
+  aname="$(echo "$aname" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
+  if [ -z "$aname" ]; then
+    if [ ${#agent_names[@]} -eq 0 ]; then
       warn "You need at least one agent."
       continue
     fi
@@ -55,7 +63,7 @@ while true; do
 
   # What they do
   echo ""
-  read -rp "What does $agent_name do? (freeform — e.g. backend, architecture, testing): " agent_role
+  read -rp "What does $aname do? (freeform — e.g. backend, architecture, testing): " arole
 
   # Who are they
   echo ""
@@ -65,7 +73,7 @@ while true; do
   echo -e "${DIM}Example: \"Sherlock Holmes, Arthur Conan Doyle's obsessive detective who sees what everyone else misses\"${RESET}"
   echo -e "${DIM}Example: \"Grace Hopper, the Navy rear admiral who invented the compiler and told people to ask forgiveness, not permission\"${RESET}"
   echo ""
-  read -rp "Who is $agent_name? " agent_character
+  read -rp "Who is $aname? " acharacter
 
   # Autonomy
   echo ""
@@ -75,36 +83,80 @@ while true; do
   echo "  3) Low — confirms before acting"
   read -rp "Autonomy [1/2/3, default 2]: " autonomy_choice
   case "${autonomy_choice:-2}" in
-    1) autonomy="high" ;;
-    3) autonomy="low" ;;
-    *) autonomy="medium" ;;
+    1) aautonomy="high" ;;
+    3) aautonomy="low" ;;
+    *) aautonomy="medium" ;;
   esac
 
-  # Is this the lead/architect?
-  echo ""
-  read -rp "Is $agent_name the team lead / architect? [y/N]: " is_lead
-  is_lead="$(echo "${is_lead:-n}" | tr '[:upper:]' '[:lower:]')"
-
-  # Build JSON entry
-  [ "$agent_count" -gt 0 ] && agents_json+=","
-  agents_json+="
-    {
-      \"name\": \"$agent_name\",
-      \"role\": \"$agent_role\",
-      \"character\": \"$agent_character\",
-      \"autonomy\": \"$autonomy\",
-      \"lead\": $([ "$is_lead" = "y" ] && echo "true" || echo "false")
-    }"
-
-  agent_count=$((agent_count + 1))
+  agent_names+=("$aname")
+  agent_roles+=("$arole")
+  agent_characters+=("$acharacter")
+  agent_autonomies+=("$aautonomy")
 
   echo ""
-  read -rp "Add another agent? [y/N]: " add_more
-  add_more="$(echo "${add_more:-n}" | tr '[:upper:]' '[:lower:]')"
-  [ "$add_more" != "y" ] && break
+  echo -e "${DIM}${#agent_names[@]} agent(s) so far: ${agent_names[*]}${RESET}"
+  read -rp "[a]dd another or [d]one? " add_choice
+  add_choice="$(echo "${add_choice:-d}" | tr '[:upper:]' '[:lower:]')"
+  [ "$add_choice" != "a" ] && break
   echo ""
 done
 
+agent_count=${#agent_names[@]}
+
+# --- Pick the lead ---
+echo ""
+echo -e "${BOLD}Which agent is the lead?${RESET}"
+echo -e "${DIM}The lead coordinates tasks, manages the board, and keeps the team on track. They don't write code.${RESET}"
+echo ""
+for i in "${!agent_names[@]}"; do
+  letter=$(printf "\\x$(printf '%02x' $((97 + i)))")
+  echo "  $letter) ${agent_names[$i]} — ${agent_roles[$i]}"
+done
+echo ""
+read -rp "Lead [a]: " lead_choice
+lead_choice="$(echo "${lead_choice:-a}" | tr '[:upper:]' '[:lower:]')"
+lead_idx=$(( $(printf '%d' "'$lead_choice") - 97 ))
+if [ "$lead_idx" -lt 0 ] || [ "$lead_idx" -ge "$agent_count" ]; then
+  lead_idx=0
+fi
+
+# --- Assign models ---
+echo ""
+echo -e "${BOLD}Assigning models${RESET}"
+echo -e "${DIM}Tip: opus for the lead and content-heavy work, sonnet for coding${RESET}"
+echo ""
+
+declare -a agent_models=()
+for i in "${!agent_names[@]}"; do
+  if [ "$i" -eq "$lead_idx" ]; then
+    default_num="2"
+  else
+    default_num="1"
+  fi
+  echo "  1) anthropic/claude-sonnet-4-6"
+  echo "  2) anthropic/claude-opus-4-6"
+  read -rp "${agent_names[$i]} [default $default_num]: " model_choice
+  case "${model_choice:-$default_num}" in
+    2) agent_models+=("anthropic/claude-opus-4-6") ;;
+    *) agent_models+=("anthropic/claude-sonnet-4-6") ;;
+  esac
+done
+
+# --- Build JSON ---
+agents_json="["
+for i in "${!agent_names[@]}"; do
+  [ "$i" -gt 0 ] && agents_json+=","
+  is_lead=$([ "$i" -eq "$lead_idx" ] && echo "true" || echo "false")
+  agents_json+="
+    {
+      \"name\": \"${agent_names[$i]}\",
+      \"role\": \"${agent_roles[$i]}\",
+      \"character\": \"${agent_characters[$i]}\",
+      \"autonomy\": \"${agent_autonomies[$i]}\",
+      \"model\": \"${agent_models[$i]}\",
+      \"lead\": $is_lead
+    }"
+done
 agents_json+="
   ]"
 
@@ -135,7 +187,7 @@ for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)
 
   if [ "$agent_lead" = "True" ]; then
     workshopping="Yes — this is the primary brainstorming partner. Workshops with the $user_title directly."
-    boundary_note="You manage comms/board/. You do NOT write code. You write plans, specs, and assign work."
+    boundary_note="You own comms/board/ and comms/docs/. You coordinate the team — assign tasks, unblock people, and keep everyone's workspace clean. If someone's inbox is piling up or active/ is stale, tell them to sort it out. You do NOT write code."
   else
     workshopping="No — executes tasks, routes questions through inboxes or the board."
     boundary_note="Stay in your lane. If something is outside your role, drop it on the board or message the lead."
