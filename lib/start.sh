@@ -65,7 +65,7 @@ launch_agent() {
   else
     tmux new-window -t "$SESSION" -n "$agent" -c "$root"
   fi
-  tmux send-keys -t "$SESSION:$agent" "$cli_cmd; tmux kill-session -t $SESSION" Enter
+  tmux send-keys -t "$SESSION:$agent" "trap \"'$MUSTER_ROOT/bin/muster' stop\" EXIT; $cli_cmd" Enter
 }
 
 # Create the tmux session with monitor as window 0
@@ -102,9 +102,6 @@ if [ -f "$root/.muster-dashboard-port" ]; then
   DASHBOARD_PORT="$(cat "$root/.muster-dashboard-port")"
 fi
 
-# Keybind: Ctrl+b Q kills the whole muster session
-tmux bind-key -T prefix Q run-shell "'$MUSTER_ROOT/bin/muster' stop"
-
 # Configure status bar — show agent counts + dashboard URL
 tmux set-option -t "$SESSION" status-right "#($STATUS_SCRIPT) | :$DASHBOARD_PORT"
 tmux set-option -t "$SESSION" status-interval 5
@@ -140,7 +137,7 @@ TITLE_SCREEN="$root/.muster-title.sh"
   echo 'echo ""'
   echo "echo -e \"  \033[0;36mDashboard: http://localhost:${DASHBOARD_PORT}\033[0m\""
   echo 'echo ""'
-  echo 'echo -e "  \033[2mCtrl+b Q   kill session\033[0m"'
+  echo 'echo -e "  \033[2mCtrl+C     stop muster\033[0m"'
   echo 'echo -e "  \033[2mCtrl+b n/p switch agents\033[0m"'
   echo 'echo ""'
   echo 'read -r -p ""'
