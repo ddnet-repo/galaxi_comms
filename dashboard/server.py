@@ -59,6 +59,24 @@ def list_md(directory):
     return result
 
 
+def get_pane_status(agent_name):
+    """Capture the last few lines from an agent's tmux pane to infer status."""
+    try:
+        result = subprocess.run(
+            ["tmux", "capture-pane", "-t", f"muster:{agent_name}", "-p", "-l", "5"],
+            capture_output=True, text=True, timeout=2
+        )
+        if result.returncode != 0:
+            return "offline"
+        lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+        if not lines:
+            return "idle"
+        last = lines[-1][:120]
+        return last
+    except Exception:
+        return "offline"
+
+
 def get_agent_data(team):
     agents = []
     for agent in team["agents"]:
@@ -73,6 +91,7 @@ def get_agent_data(team):
             "active": list_md(agent_dir / "active"),
             "journal": list_md(agent_dir / "journal")[:3],
             "notes": list_md(agent_dir / "notes"),
+            "pane_status": get_pane_status(name),
         })
     return agents
 
@@ -258,7 +277,23 @@ HTML = r"""<!DOCTYPE html>
   .card-model {
     color: #484f58;
     font-size: 0.75em;
+    margin-bottom: 8px;
+  }
+  .card-status {
+    font-size: 0.8em;
     margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #58a6ff;
+  }
+  .card-status.idle {
+    color: #484f58;
+    font-style: italic;
+  }
+  .card-status.offline {
+    color: #f85149;
+    font-style: italic;
   }
 
   .counts {
@@ -481,6 +516,7 @@ function render() {
       <div class="card-character">${a.character.substring(0, 100)}${a.character.length > 100 ? '...' : ''}</div>
       <div class="card-role">${a.role}</div>
       <div class="card-model">${a.model || ''}</div>
+      <div class="card-status ${a.pane_status === 'offline' ? 'offline' : a.pane_status === 'idle' ? 'idle' : 'working'}">${escapeHtml(a.pane_status)}</div>
       <div class="counts">
         <div class="count-item">inbox <span class="count-num ${countClass(a.inbox_count, 3)}">${a.inbox_count}</span></div>
         <div class="count-item">active <span class="count-num ${countClass(a.active_count, 3)}">${a.active_count}</span></div>
