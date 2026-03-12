@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Muster — assemble your AI agent team
+set -euo pipefail
+
+MUSTER_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LIB="$MUSTER_ROOT/lib"
+
+source "$LIB/common.sh"
+
+usage() {
+  cat <<EOF
+${BOLD}muster${RESET} — assemble your AI agent team
+
+${BOLD}Usage:${RESET}
+  muster <command>
+
+${BOLD}Commands:${RESET}
+  init       Set up comms in the current project
+  start      Launch all agent sessions in tmux
+  stop       Kill the tmux session
+  status     Show inbox/active counts
+  add        Add a team member
+  remove     Remove a team member
+  reset      Wipe comms/ and start over
+  version    Print version
+
+EOF
+}
+
+case "${1:-}" in
+  init)    source "$LIB/init.sh" ;;
+  start)   source "$LIB/start.sh" ;;
+  stop)    source "$LIB/stop.sh" ;;
+  status)  source "$LIB/status.sh" ;;
+  add)     shift; source "$LIB/add.sh" "$@" ;;
+  remove)  shift; source "$LIB/remove.sh" "$@" ;;
+  reset)   source "$LIB/reset.sh" ;;
+  version) echo "muster $MUSTER_VERSION" ;;
+  -h|--help|"") usage ;;
+  *)       die "Unknown command: $1. Run 'muster --help' for usage." ;;
+esac
