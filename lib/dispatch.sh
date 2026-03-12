@@ -22,16 +22,34 @@ for agent in "${AGENTS[@]}"; do
 
   if [ "$watcher" = "inotify" ]; then
     (
-      inotifywait -m -r -e create -e modify "$inbox" 2>/dev/null |
-      while read; do
-        tmux send-keys -t "muster:$agent" "You have new mail in your inbox. Check comms/$agent/inbox/ now." Enter 2>/dev/null || true
+      last_notify=0
+      inotifywait -m -q --format '%f' -e create "$inbox" 2>/dev/null |
+      while read -r filename; do
+        case "$filename" in
+          *.md)
+            now=$(date +%s)
+            if [ $((now - last_notify)) -ge 2 ]; then
+              tmux send-keys -t "muster:$agent" "You have new mail. Check your inbox." Enter 2>/dev/null || true
+              last_notify=$now
+            fi
+            ;;
+        esac
       done
     ) &
   else
     (
-      fswatch -r "$inbox" 2>/dev/null |
-      while read; do
-        tmux send-keys -t "muster:$agent" "You have new mail in your inbox. Check comms/$agent/inbox/ now." Enter 2>/dev/null || true
+      last_notify=0
+      fswatch --event Created -r "$inbox" 2>/dev/null |
+      while read -r filepath; do
+        case "$filepath" in
+          *.md)
+            now=$(date +%s)
+            if [ $((now - last_notify)) -ge 2 ]; then
+              tmux send-keys -t "muster:$agent" "You have new mail. Check your inbox." Enter 2>/dev/null || true
+              last_notify=$now
+            fi
+            ;;
+        esac
       done
     ) &
   fi
