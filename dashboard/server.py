@@ -461,7 +461,7 @@ HTML = r"""<!DOCTYPE html>
 </head>
 <body>
 
-<h1 id="project-name">muster</h1>
+<h1><span style="color:#484f58">muster</span> <span style="color:#58a6ff">/</span> <span id="project-name">loading...</span></h1>
 <div class="meta">
   <span id="status-badge">loading...</span>
   &middot; <span id="user-title"></span>
