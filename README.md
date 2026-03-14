@@ -72,6 +72,7 @@ Pre-built team configurations in `.muster/`. Use them with `muster init --from <
 | `atelier.json` | Famous Artists | leo, frida, dali, basquiat, bob |
 | `breaking-bad.json` | Breaking Bad | walt, jesse, gus, mike, saul |
 | `dark-side.json` | Star Wars | palpatine, vader, tarkin, maul, thrawn |
+| `enterprise.json` | Star Trek TOS | kirk, spock, bones, scotty, uhura |
 | `golden-girls.json` | Golden Girls | dorothy, sophia, blanche, rose |
 | `hells-kitchen.json` | Celebrity Chefs | ramsay, bourdain, child, white |
 | `magnum-pi.json` | Magnum P.I. | magnum, higgins, rick, tc, robin |
