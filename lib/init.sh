@@ -289,8 +289,12 @@ for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)
 
   if [ "$agent_lead" = "True" ]; then
     agent_mode="primary"
+    agent_tools="
+tools:
+  task: false"
   else
     agent_mode="subagent"
+    agent_tools=""
   fi
 
   # Generate .opencode/agents/<name>.md
@@ -298,7 +302,7 @@ for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)
 ---
 description: "$agent_role"
 mode: $agent_mode
-model: $agent_model
+model: $agent_model$agent_tools
 ---
 
 # WHO YOU ARE
@@ -339,12 +343,6 @@ You are the lead. When the $user_title gives you a task, you break it down and r
 - Use \`team_broadcast\` to address the whole crew at once.
 - Use \`team_tasks\` to create and track tasks. Teammates claim them with \`team_claim\`.
 - When teammates message you back, you'll be woken up automatically. Read their messages and respond.
-
-### CRITICAL: Do NOT use the Task tool for team coordination.
-
-The Task tool is for subagent work — it blocks until the subagent finishes, which means you can only run one thing at a time and the $user_title's input gets queued. That is NOT how you run a crew.
-
-Use \`team_spawn\` + \`team_message\` for ALL teammate coordination. This lets everyone work in parallel while you stay available to the $user_title and to incoming messages from the crew.
 
 ### Running the Show
 
