@@ -5,7 +5,26 @@ COMMS_DIR="$PWD/comms"
 OPENCODE_AGENTS_DIR="$PWD/.opencode/agents"
 
 if [ -f "$COMMS_DIR/team.json" ]; then
-  die "This project already has comms set up. Run 'muster add' to add team members."
+  die "This project already has comms set up. Run 'muster reset' first, then 'muster init'."
+fi
+
+# --- Clean up legacy v0.1.x artifacts ---
+rm -f "$PWD/CLAUDE.md"
+rm -f "$PWD/.muster-status.sh"
+rm -f "$PWD/.muster-dispatch.pid"
+rm -f "$PWD/.muster-dashboard.pid"
+rm -f "$PWD/.muster-dashboard-port"
+rm -f "$PWD/.muster-title.sh"
+
+# Remove old comms subdirectories that no longer exist in v0.2
+if [ -d "$COMMS_DIR" ]; then
+  for agent_dir in "$COMMS_DIR"/*/; do
+    [ -d "$agent_dir" ] || continue
+    rm -rf "${agent_dir}inbox" "${agent_dir}active" "${agent_dir}archive" "${agent_dir}trash"
+  done
+  rm -rf "$COMMS_DIR/board" "$COMMS_DIR/docs" "$COMMS_DIR/examples"
+  # Remove old main.md protocol (replaced by agent prompts)
+  rm -f "$COMMS_DIR/main.md"
 fi
 
 echo ""
