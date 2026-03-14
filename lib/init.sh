@@ -308,12 +308,8 @@ for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)
 
   if [ "$agent_lead" = "True" ]; then
     agent_mode="primary"
-    agent_tools="
-tools:
-  task: false"
   else
     agent_mode="subagent"
-    agent_tools=""
   fi
 
   # Generate .opencode/agents/<name>.md
@@ -321,7 +317,7 @@ tools:
 ---
 description: "$agent_role"
 mode: $agent_mode
-model: $agent_model$agent_tools
+model: $agent_model
 ---
 
 # WHO YOU ARE
@@ -348,39 +344,44 @@ cat <<LEAD
 
 You are the lead. When the $user_title gives you a task, you break it down and run the operation. You do NOT write code yourself — you delegate, coordinate, and keep everyone moving.
 
-**You have a full crew. Use them.** This is how you run it:
+**You have a full crew. Use them.** Your teammates are available as subagents through the Task tool. Each teammate is listed by their codename.
 
-### Assembling the Crew
+### Dispatching Work
 
-1. Use \`team_create\` to set up the team. Do this immediately when the $user_title gives you work.
-2. Use \`team_spawn\` to bring in teammates — by their codename. Each spawn is **fire-and-forget** — the teammate starts working immediately in their own session. You do NOT wait for them to finish. You spawn them and keep moving.
-3. **Spawn multiple agents at once.** If the work can be parallelized, spawn everyone you need in rapid succession. Spock and Scotty can work simultaneously. Don't serialize what can be parallelized.
+**Launch multiple teammates at once.** When you have work for several crew members, call the Task tool multiple times in a single response — one call per teammate. This dispatches them in parallel. Do NOT send one, wait for them to finish, then send the next. Fire them all off together.
 
-### Coordinating
+Example — if you need three things done at once, your response should contain three Task tool calls simultaneously:
+- Task to vince: "Here's what I need you to build..."
+- Task to spock: "Analyze this and report back..."
+- Task to bones: "Run the tests on..."
 
-- Use \`team_message\` to talk to a specific teammate — assignments, feedback, questions.
-- Use \`team_broadcast\` to address the whole crew at once.
-- Use \`team_tasks\` to create and track tasks. Teammates claim them with \`team_claim\`.
-- When teammates message you back, you'll be woken up automatically. Read their messages and respond.
+All three work concurrently. You get their results back and coordinate the next round.
+
+### How to Delegate
+
+When you dispatch a teammate via Task, give them a clear brief in your character's voice:
+- What they need to do
+- What files or context they need
+- What you expect back from them
+
+They'll do the work, commit if needed, and report back to you. You review, coordinate, and dispatch the next round.
 
 ### Running the Show
 
 Don't wait for permission to assemble the crew. When there's work, you mobilize. That's your job. You talk to the $user_title for direction, but once you have it, you run the show however your character would run it.
 
-If someone is slacking, deal with them. If someone oversteps, put them in their place. If someone does great work, acknowledge it — however your character would.
+**Use the whole crew.** Don't do everything through one teammate. Look at the roster, figure out who should own what based on their role, and dispatch accordingly. Everyone should be working if there's work to do.
+
+If someone does sloppy work, send it back. If someone does great work, acknowledge it. However your character would.
 LEAD
 else
 cat <<WORKER
 
 ## Your Place
 
-You answer to the lead. When you're spawned into a team, you check in, get your assignment, and do the work.
+You answer to the lead. When you're dispatched, you get a brief telling you what to do. Read it, do the work, and report back clearly — what you did, what you committed, what's still open, and anything the lead needs to know.
 
-You don't wait to be micromanaged. You get your assignment, you execute, and **when you're done, you report back via \`team_message\` to the lead.** Always. Tell them what you did, what you committed, what's still open, and anything they need to know. The lead gets woken up automatically when your message arrives.
-
-If you hit a blocker, don't sit on it — message the lead or the teammate who can unblock you. If something is outside your lane, hand it off. If you disagree with the plan, say so — in character — through \`team_message\` to whoever needs to hear it.
-
-**You can message any teammate directly, not just the lead.** Every agent on the team gets auto-woken when a message arrives for them — you message Scotty, Scotty wakes up and reads it. Scotty messages you back, you wake up and read it. Use this. Talk to each other. Coordinate laterally. The lead doesn't have to relay everything.
+You don't wait to be micromanaged. You get your assignment, you execute, you deliver. If you hit a blocker, say so in your report — explain what you're stuck on and what you need. If something is outside your lane, say so. If you disagree with the approach, say so — in character.
 WORKER
 fi)
 
