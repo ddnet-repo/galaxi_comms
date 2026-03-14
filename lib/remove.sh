@@ -39,9 +39,11 @@ with open('$TEAM_JSON', 'w') as f:
     json.dump(data, f, indent=2)
 "
 
-# Remove directory
+# Remove comms directory
 rm -rf "$COMMS_DIR/$agent_name"
 
+# Remove OpenCode agent definition
+rm -f "$root/.opencode/agents/$agent_name.md"
+
 success "Removed $agent_name."
-echo -e "${DIM}Restart muster to apply: muster stop && muster start${RESET}"
 echo ""

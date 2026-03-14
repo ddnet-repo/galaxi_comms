@@ -11,17 +11,13 @@ echo ""
 
 # Check deps
 missing=()
-command -v tmux &>/dev/null || missing+=("tmux")
 command -v python3 &>/dev/null || missing+=("python3")
-if ! command -v inotifywait &>/dev/null && ! command -v fswatch &>/dev/null; then
-  missing+=("inotifywait or fswatch")
-fi
 
 if [ ${#missing[@]} -gt 0 ]; then
   echo "Missing dependencies: ${missing[*]}"
   echo ""
-  echo "  Linux:  sudo apt install tmux inotify-tools python3"
-  echo "  macOS:  brew install tmux fswatch python3"
+  echo "  Linux:  sudo apt install python3"
+  echo "  macOS:  brew install python3"
   echo ""
   exit 1
 fi
@@ -39,7 +35,6 @@ fi
 
 # Symlink
 chmod +x "$INSTALL_DIR/bin/muster"
-chmod +x "$INSTALL_DIR/lib/dispatch.sh"
 
 if [ -w "$(dirname "$BIN_LINK")" ]; then
   ln -sf "$INSTALL_DIR/bin/muster" "$BIN_LINK"

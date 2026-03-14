@@ -1,8 +1,6 @@
-# Muster
+# muster
 
-Assemble a team of AI agents with distinct characters, roles, and persistent memory. Each agent is a fictional or historical figure who knows their job and stays in their lane.
-
-**This is a solo dev tool.** You're one person running multiple AI agents as your team. No real humans involved — just you and your agents. Instead of one AI doing everything, you run a crew. They coordinate through a shared task board and direct messages. You manage them in tmux — one command boots everyone up.
+Assemble AI agent teams with extreme character-driven personalities.
 
 ## Install
 
@@ -10,136 +8,85 @@ Assemble a team of AI agents with distinct characters, roles, and persistent mem
 curl -fsSL https://raw.githubusercontent.com/ddnet-repo/muster/master/install.sh | sh
 ```
 
-Requires: `tmux`, `python3`, `inotifywait` (from `inotify-tools`), and an agent CLI like [opencode](https://github.com/anomalyco/opencode). Linux only.
+Requires: `python3` and [opencode](https://github.com/anomalyco/opencode).
 
 ## Usage
 
 ```bash
 cd your-project
-muster init       # walks you through team setup
-muster start      # launches everyone in tmux
-muster stop       # kills the session
-muster status     # inbox/active counts at a glance
-muster add        # add a team member later
+muster init       # wizard: name agents, pick characters, choose a lead
+opencode          # open the project — your agents are ready
+```
+
+Other commands:
+```bash
+muster info       # show project setup and team roster
+muster add        # add a team member
 muster remove     # remove one
+muster reset      # wipe everything and start over
 ```
 
 ## What `muster init` does
 
 Asks you:
 - Project name
-- What your agents should call you (Commander, Boss, Your Excellency, etc.)
-- Which CLI your agents run (opencode, claude, aider, etc.)
-- For each agent: codename, what they do, who they are, autonomy level
-- Which agent is the lead (coordinates tasks, manages the board, doesn't code)
-- Models per agent (opus for lead/content, sonnet for coding — sensible defaults)
+- What your agents should call you (Commander, Boss, My Lord, etc.)
+- For each agent: codename, what they do, who they are (as a character), autonomy level
+- Which agent is the lead (coordinates, delegates, doesn't code)
+- Models per agent (opus for lead/thinking, sonnet for coding)
 
 Then it generates:
 ```
+.opencode/agents/
+  <name>.md       <- OpenCode agent definition with extreme character personality
+  ...
+
 comms/
-  team.json          <- your team config (single source of truth)
-  main.md            <- the protocol every agent reads on startup
-  board/             <- centralized task board, lead-managed
-  docs/              <- shared reference material
-  <agent>/
-    profile.md       <- character + role + behavioral knobs
-    inbox/           <- direct messages from other agents
-    active/          <- work in progress (max 3)
-    archive/         <- completed work
-    trash/           <- dead letters
-    notes/           <- persistent memory across sessions
-    journal/         <- session history in character voice
+  team.json       <- team roster and config
+  <name>/
+    journal/      <- session logs in character voice (captain's log)
+    notes/        <- persistent memory across sessions
+  ...
+
+opencode.json     <- OpenCode config
+AGENTS.md         <- project instructions
 ```
 
-## What `muster start` does
+## How it works
 
-One tmux session with:
-- A named window per agent — boots their CLI, tells them who they are
-- A `monitor` window — live dashboard of inbox/active counts
-- A `dispatch` window — watches all inboxes, pings agents when they get mail
-- A status bar showing every agent's inbox count
+Muster generates [OpenCode agent definitions](https://opencode.ai/docs/agents/) with extreme character personalities. Each agent is a fully realized character — not a "tone" or a "style," but a complete personality that never breaks.
 
-Flip between agents with `Ctrl+b n`/`Ctrl+b p` or `Ctrl+b <number>`.
+Coordination happens through OpenCode's native agent teams system: message passing, task management, peer-to-peer communication, auto-wake. Muster doesn't manage any of that — OpenCode does.
 
-## Characters are the point
-
-When the wizard asks "Who is this agent?" — be specific. The LLM already knows how these people behave:
-
-- "Grace Hopper, the Navy rear admiral who invented the compiler and told people to ask forgiveness, not permission"
-- "Takezo Shinmen, the ronin who fought 61 duels undefeated and wrote The Book of Five Rings"
-- "Sherlock Holmes, Arthur Conan Doyle's obsessive detective who sees what everyone else misses"
-
-A character name carries more behavioral weight than three paragraphs of personality description. Pick someone whose energy matches the role.
-
-**Tip: pick characters who push back.** LLMs already want to please you — that's their default. If you pick characters who are helpful and agreeable (the A-Team, the Avengers, any "team of heroes who love their boss"), you're amplifying the exact sycophancy problem that makes AI output useless. Pick villains, rivals, divas, curmudgeons — characters with opinions who wouldn't just nod along. Darth Vader doesn't care if you like his code review. Sophia Petrillo isn't going to sugarcoat her feedback. Higgins thinks your code is beneath him. That friction is a feature. It's the only way you get honest output from a machine that's wired to agree with you.
-
-## How the team works
-
-- **The board** (`comms/board/`) is the single source of truth for tasks. The lead owns it. Everyone reads it, only the lead writes to it. The lead coordinates — assigns tasks, unblocks people, and tells agents to clean up their workspace when things get messy.
-- **Inboxes** are for direct messages — questions, pushback, FYIs. Not task assignment.
-- **The loop** — every agent follows the same cycle: check board, check inbox, pick highest priority (unblocking others first), do the work, commit, notify, repeat. They never ask "what should I do next?"
-- **Notes** persist across sessions. Gotchas, patterns, things that burned you. Loaded every startup.
-- **Journals** are session history in character voice. Append-only.
-
-## Example
-
-```
-$ muster init
-Project name [my-app]: my-app
-Agent CLI command [opencode]: opencode
-
---- Agent 1 ---
-Codename: arc
-What does arc do? architecture, planning, task management
-Who is arc? Sun Tzu, the ancient Chinese military strategist who wrote The Art of War
-Autonomy [1/2/3, default 2]: 1
-
-2 agent(s) so far: arc
-[a]dd another or [d]one? a
-
---- Agent 2 ---
-Codename: forge
-What does forge do? backend, databases, APIs
-Who is forge? Hephaestus, the Greek god of the forge who built weapons for the gods
-Autonomy [1/2/3, default 2]: 1
-
-2 agent(s) so far: arc forge
-[a]dd another or [d]one? d
-
-Which agent is the lead?
-  a) arc — architecture, planning, task management
-  b) forge — backend, databases, APIs
-Lead [a]: a
-
-Assigning models
-  arc [default 2]: 2          <- opus (lead)
-  forge [default 1]: 1        <- sonnet (worker)
-
-Done. 2 agent(s) configured for my-app.
-Run 'muster start' to launch your team.
-```
+What muster adds:
+- **Character layer** — Agents ARE their characters. Darth Vader doesn't politely suggest improvements. Scooby-Doo literally talks like Scooby-Doo. The character dynamics drive the team dynamics.
+- **Persistent memory** — Each agent has `journal/` (session logs in their voice) and `notes/` (working memory). Read the journals to see your project's history told by characters.
+- **Recipes** — Pre-built teams. Mystery Inc., Wu-Tang Clan, Star Wars dark side, Golden Girls, and more.
 
 ## Recipes
 
-Don't want to build a team from scratch? Pick a premade one during `muster init`:
+Pre-built team configurations in `.muster/`. Use them with `muster init --from <file>` or select interactively during init.
 
-```
-How do you want to set up your team?
-  m) Manual — build from scratch
-  r) Recipe — choose a premade team
-[m/r]: r
+| Recipe | Theme | Agents |
+|--------|-------|--------|
+| `atelier.json` | Famous Artists | leo, frida, dali, basquiat, bob |
+| `breaking-bad.json` | Breaking Bad | walt, jesse, gus, mike, saul |
+| `dark-side.json` | Star Wars | palpatine, vader, tarkin, maul, thrawn |
+| `golden-girls.json` | Golden Girls | dorothy, sophia, blanche, rose |
+| `hells-kitchen.json` | Celebrity Chefs | ramsay, bourdain, child, white |
+| `magnum-pi.json` | Magnum P.I. | magnum, higgins, rick, tc, robin |
+| `mighty-boosh.json` | The Mighty Boosh | howard, vince, gregg, naboo, bollo |
+| `mystery-inc.json` | Scooby-Doo | fred, velma, daphne, shaggy |
+| `rogues-gallery.json` | Batman Villains | riddler, joker, bane, catwoman, freeze, scarecrow |
+| `star-trek-villains.json` | Star Trek | khan, q, borg-queen, gul-dukat, chang |
+| `writers-room.json` | Famous Authors | hemingway, poe, wilde, kafka, twain |
+| `wrestlemania.json` | Pro Wrestling | undertaker, rock, stone-cold |
+| `wu-tang.json` | Wu-Tang Clan | rza, gza, meth, deck, odb |
 
-Available recipes:
-  a) Dark Side — Star Wars dark side themed team.
-  b) Star Trek Villains — Star Trek antagonist themed team.
-```
+## Why characters?
 
-You can also import from any JSON file:
+When an LLM has a vivid character to inhabit, it commits harder to the role's constraints and communicates more distinctively. The character descriptions are deliberately extreme so that even after context dilution across a long session, the personality still comes through.
 
-```
-muster init --from my-team.json
-```
+A backend engineer named "GZA" who approaches code like Liquid Swords — surgical, deliberate, no wasted bars — will produce more distinctive and consistent output than a generic "Backend Developer" prompt.
 
-See `docs/recipes/` for the full writeups and `recipes/` for the JSON files.
-
-**Got a fun team?** Send a PR with a JSON file in `recipes/` and a writeup in `docs/recipes/`. We want to see what you come up with.
+The friction between characters is intentional. If Vader force-chokes a subordinate for sloppy code, that's a feature. If Palpatine puts Vader in his place, that's the hierarchy working. Let them be who they are.

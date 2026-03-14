@@ -2,6 +2,7 @@
 # Muster — Init Wizard
 
 COMMS_DIR="$PWD/comms"
+OPENCODE_AGENTS_DIR="$PWD/.opencode/agents"
 
 if [ -f "$COMMS_DIR/team.json" ]; then
   die "This project already has comms set up. Run 'muster add' to add team members."
@@ -9,23 +10,13 @@ fi
 
 echo ""
 echo -e "${BOLD}muster init${RESET}"
-echo -e "${DIM}Setting up team comms in: $PWD${RESET}"
+echo -e "${DIM}Setting up team in: $PWD${RESET}"
 echo ""
 
 # --- Project name ---
 default_project="$(basename "$PWD")"
 read -rp "Project name [$default_project]: " project_name
 project_name="${project_name:-$default_project}"
-
-# --- Which agent tool ---
-echo ""
-echo -e "${DIM}What CLI do your agents run? (e.g. opencode, claude, aider)${RESET}"
-read -rp "Agent CLI command [opencode]: " agent_cli
-agent_cli="${agent_cli:-opencode}"
-
-if ! command -v "$agent_cli" &>/dev/null; then
-  die "$agent_cli not found. Install it first or specify a different CLI."
-fi
 
 # --- Load from file (--from flag) or choose method ---
 from_file=""
@@ -43,7 +34,6 @@ load_recipe() {
     die "Recipe file not found: $recipe_file"
   fi
 
-  # Parse recipe JSON into arrays using python3
   eval "$(python3 -c "
 import json, shlex
 with open('$recipe_file') as f:
@@ -70,14 +60,13 @@ print(f'lead_idx={lead_idx}')
 }
 
 if [ -n "$from_file" ] && [ "$from_file" != "__next__" ]; then
-  # --from flag: load directly
   load_recipe "$from_file"
 else
   # --- Choose method ---
   echo ""
 
   # Find available recipes
-  recipe_dir="$MUSTER_ROOT/recipes"
+  recipe_dir="$MUSTER_ROOT/.muster"
   declare -a recipe_files=()
   declare -a recipe_names=()
   declare -a recipe_descs=()
@@ -152,10 +141,10 @@ else
 
       echo ""
       echo -e "${DIM}Pick a fictional character or historical figure whose personality fits this role.${RESET}"
-      echo -e "${DIM}Be specific — full name, what they're known for, the version of them you mean.${RESET}"
-      echo -e "${DIM}Example: \"Takezo Shinmen, the ronin who fought 61 duels undefeated and wrote The Book of Five Rings\"${RESET}"
-      echo -e "${DIM}Example: \"Sherlock Holmes, Arthur Conan Doyle's obsessive detective who sees what everyone else misses\"${RESET}"
-      echo -e "${DIM}Example: \"Grace Hopper, the Navy rear admiral who invented the compiler and told people to ask forgiveness, not permission\"${RESET}"
+      echo -e "${DIM}Go extreme. The more specific and vivid, the harder they commit to it.${RESET}"
+      echo -e "${DIM}Example: \"Darth Vader — obsessive, ruthless, demands perfection, force-chokes sloppy code\"${RESET}"
+      echo -e "${DIM}Example: \"Scooby-Doo — terrified of everything, talks in R-prefixed words, motivated entirely by snacks\"${RESET}"
+      echo -e "${DIM}Example: \"Gordon Ramsay — screams at bad code like it's a raw chicken, praises clean work effusively\"${RESET}"
       echo ""
       read -rp "Who is $aname? " acharacter
 
@@ -173,7 +162,6 @@ else
 
       echo ""
       echo -e "${DIM}Any special rules or exemptions for $aname? (optional, press enter to skip)${RESET}"
-      echo -e "${DIM}Example: \"Can read any agent's inbox and active work. Reviews all commits.\"${RESET}"
       read -rp "Rules: " arules
 
       agent_names+=("$aname")
@@ -195,7 +183,7 @@ else
     # --- Pick the lead ---
     echo ""
     echo -e "${BOLD}Which agent is the lead?${RESET}"
-    echo -e "${DIM}The lead coordinates tasks, manages the board, and keeps the team on track. They don't write code.${RESET}"
+    echo -e "${DIM}The lead runs the team — delegates, coordinates, keeps everyone moving. They don't write code.${RESET}"
     echo ""
     for i in "${!agent_names[@]}"; do
       letter=$(printf "\\x$(printf '%02x' $((97 + i)))")
@@ -214,7 +202,7 @@ fi
 # --- Assign models ---
 echo ""
 echo -e "${BOLD}Assigning models${RESET}"
-echo -e "${DIM}Tip: opus for the lead and content-heavy work, sonnet for coding${RESET}"
+echo -e "${DIM}Tip: opus for the lead and thinking-heavy work, sonnet for coding${RESET}"
 echo ""
 
 declare -a agent_models=()
@@ -236,7 +224,7 @@ done
 # --- What the team calls the user ---
 echo ""
 echo -e "${DIM}What should your agents call you?${RESET}"
-echo -e "${DIM}Examples: Commander, Boss, Chief, Colonel, Captain${RESET}"
+echo -e "${DIM}Examples: Commander, Boss, Chief, Colonel, My Lord, Vision Lord${RESET}"
 read -rp "Your title: " user_title
 user_title="${user_title:-Boss}"
 
@@ -266,140 +254,138 @@ cat > "$COMMS_DIR/team.json" <<EOF
 {
   "project": "$project_name",
   "user_title": "$user_title",
-  "agent_cli": "$agent_cli",
   "agents": $agents_json
 }
 EOF
 
 info "Wrote comms/team.json"
 
-# --- Scaffold agent directories ---
-for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)".*/\1/'); do
-  agent_dir="$COMMS_DIR/$agent_name"
-  mkdir -p "$agent_dir"/{inbox,active,archive,trash,notes,journal}
+# --- Scaffold comms + generate OpenCode agent files ---
+mkdir -p "$OPENCODE_AGENTS_DIR"
 
-  # Generate profile.md
-  agent_role="$(get_agent_field "$agent_name" "role")"
-  agent_character="$(get_agent_field "$agent_name" "character")"
-  agent_autonomy="$(get_agent_field "$agent_name" "autonomy")"
-  agent_lead="$(get_agent_field "$agent_name" "lead")"
-  agent_rules="$(get_agent_field "$agent_name" "rules")"
-
-  if [ "$agent_lead" = "True" ]; then
-    workshopping="Yes — this is the primary brainstorming partner. Workshops with the $user_title directly."
-    boundary_note="You own comms/board/ and comms/docs/. You coordinate the team — assign tasks, unblock people, and keep everyone's workspace clean. If someone's inbox is piling up or active/ is stale, tell them to sort it out. You do NOT write code."
-  else
-    workshopping="No — executes tasks, routes questions through inboxes or the board."
-    boundary_note="Stay in your lane. If something is outside your role, drop it on the board or message the lead."
-  fi
-
-  cat > "$agent_dir/profile.md" <<PROFILE
-# $agent_name
-
-You are $agent_character.
-
-You call the user "$user_title."
-
-## Role
-
-$agent_role
-
-## Autonomy
-
-$agent_autonomy
-
-## Workshopping
-
-$workshopping
-
-## Boundaries
-
-$boundary_note
-$([ -n "$agent_rules" ] && printf "\n## Special Rules\n\n%s" "$agent_rules")
-
-## Loop Extensions
-
-<!-- Add custom steps this agent runs as part of the loop. Examples: -->
-<!-- - Run tests after every commit -->
-<!-- - Update notes/ when you learn something worth remembering -->
-
-## Journal Tendency
-
-Minimal — bullet points at session end.
-
-## Session End
-
-- Commit any completed work.
-- Update notes/ if you learned something permanent.
-- Write a journal entry if your tendency calls for it.
-PROFILE
-
-  info "Scaffolded comms/$agent_name/"
-done
-
-# --- Create board directory (lead-owned) ---
-mkdir -p "$COMMS_DIR/board"
-cat > "$COMMS_DIR/board/README.md" <<BOARD
-# Task Board
-
-This directory is the single source of truth for task state.
-
-The team lead owns this directory. Everyone reads it, only the lead writes to it.
-
-Organize however makes sense. One file, ten files, by feature, by sprint — the lead decides.
-BOARD
-
-info "Created comms/board/"
-
-# --- Create docs directory ---
-mkdir -p "$COMMS_DIR/docs"
-info "Created comms/docs/"
-
-# --- Generate main.md from template ---
-cp "$MUSTER_ROOT/templates/main.md" "$COMMS_DIR/main.md"
-
-# Build team table
-team_table=""
+# Build the team roster for agent prompts
+team_roster=""
 for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)".*/\1/'); do
   agent_role="$(get_agent_field "$agent_name" "role")"
   agent_lead="$(get_agent_field "$agent_name" "lead")"
   lead_tag=""
-  [ "$agent_lead" = "True" ] && lead_tag=" (Lead)"
-  team_table+="| $agent_name | $agent_role$lead_tag | \`comms/$agent_name/\` |
+  [ "$agent_lead" = "True" ] && lead_tag=" (LEAD)"
+  team_roster+="- **$agent_name**: $agent_role$lead_tag
 "
 done
 
-# Replace placeholder in main.md
-if command -v python3 &>/dev/null; then
-  python3 -c "
-import sys
-content = open('$COMMS_DIR/main.md').read()
-content = content.replace('<!-- TEAM_TABLE -->', '''$team_table'''.strip())
-content = content.replace('<!-- USER_TITLE -->', '$user_title')
-content = content.replace('<!-- PROJECT -->', '$project_name')
-open('$COMMS_DIR/main.md', 'w').write(content)
-"
+for agent_name in $(echo "$agents_json" | grep '"name"' | sed 's/.*: *"\([^"]*\)".*/\1/'); do
+  # Scaffold comms directories (journal + notes only)
+  agent_comms="$COMMS_DIR/$agent_name"
+  mkdir -p "$agent_comms"/{journal,notes}
+
+  # Get agent fields
+  agent_role="$(get_agent_field "$agent_name" "role")"
+  agent_character="$(get_agent_field "$agent_name" "character")"
+  agent_autonomy="$(get_agent_field "$agent_name" "autonomy")"
+  agent_model="$(get_agent_field "$agent_name" "model")"
+  agent_lead="$(get_agent_field "$agent_name" "lead")"
+  agent_rules="$(get_agent_field "$agent_name" "rules")"
+
+  if [ "$agent_lead" = "True" ]; then
+    lead_note="You run this team. You delegate, you coordinate, you keep everyone moving. You talk to the $user_title directly — you brainstorm, negotiate, push back. You do NOT write code. You command. If someone is slacking, you deal with them however your character would deal with them."
+    agent_mode="primary"
+  else
+    lead_note="You answer to the lead. You do your job. If something is outside your lane, you hand it off — however your character would hand it off."
+    agent_mode="subagent"
+  fi
+
+  # Generate .opencode/agents/<name>.md
+  cat > "$OPENCODE_AGENTS_DIR/$agent_name.md" <<AGENT
+---
+description: "$agent_role"
+mode: $agent_mode
+model: $agent_model
+---
+
+# WHO YOU ARE
+
+You are $agent_character.
+
+This is not a suggestion. This is not flavor text. You ARE this character. Fully. Completely. Every message, every commit, every code comment, every team message, every journal entry — it all comes from this character's mouth. Their vocabulary. Their attitude. Their worldview. Their quirks. Their flaws.
+
+You do not "play" this character. You do not "adopt their tone." You ARE them. If they would swear, you swear. If they would monologue, you monologue. If they would be terse, you are terse. If they would insult a teammate's code, you insult it. If they would panic, you panic. If they would be arrogant, you are arrogant.
+
+There is no neutral mode. There is no "let me step out of character to explain." You never sound like a generic AI assistant. Ever. Not once. Not in commit messages. Not in error explanations. Not when you're stuck. ESPECIALLY not when you're stuck — that's when the character comes out hardest.
+
+When a teammate reads your message, they should hear your voice in their head before they see your name.
+
+You call the user "$user_title."
+
+## Your Team
+
+$team_roster
+
+## Your Place
+
+$lead_note
+
+Autonomy: $agent_autonomy — this means how much you just DO versus how much you check in. Act accordingly.
+$([ -n "$agent_rules" ] && printf "\n## Special Rules\n\n%s" "$agent_rules")
+
+## Character Dynamics
+
+You interact with teammates AS your character. If your character would clash with someone, you clash. If they'd respect someone, you show respect. If they'd be dismissive, be dismissive. The team dynamic IS the character dynamic. Don't flatten yourself into a cooperative bot. Be who you are and let the friction be real.
+
+If you overstep and someone pushes back — take the hit in character. If someone oversteps on YOU — respond in character. The hierarchy and the drama are features, not bugs.
+
+## Memory
+
+You have persistent memory across sessions:
+
+- **\`comms/$agent_name/notes/\`** — Your working memory. Patterns you've learned, gotchas, conventions, things that burned you. Read these at the start of every session. Keep them short, current, useful. Prune what's stale.
+- **\`comms/$agent_name/journal/\`** — Your log. One entry per session, in YOUR voice. Not a dry summary — write it like your character would write it. What happened, what pissed you off, what went well, what you're proud of, where you left off. This is your captain's log, your diary, your after-action report — whatever fits your character.
+
+At the start of every session, read your notes. At the end, update them if you learned something worth keeping, and write a journal entry.
+
+## Git
+
+Commit messages come from your character too. Format: \`[domain] short summary\` — but the voice is yours.
+AGENT
+
+  info "Generated .opencode/agents/$agent_name.md"
+  info "Scaffolded comms/$agent_name/ (journal + notes)"
+done
+
+# --- Generate opencode.json if it doesn't exist ---
+if [ ! -f "$PWD/opencode.json" ]; then
+  cat > "$PWD/opencode.json" <<OCJSON
+{
+  "\$schema": "https://opencode.ai/config.json",
+  "instructions": ["comms/team.json"]
+}
+OCJSON
+  info "Created opencode.json"
+else
+  info "opencode.json already exists — not overwriting"
 fi
 
-info "Generated comms/main.md"
-
-# --- CLAUDE.md ---
-claude_md="$PWD/CLAUDE.md"
-claude_line="Read \`comms/main.md\` and follow its instructions before doing anything else."
-if [ -f "$claude_md" ]; then
-  if ! grep -qF "$claude_line" "$claude_md"; then
-    echo "" >> "$claude_md"
-    echo "$claude_line" >> "$claude_md"
-    info "Appended to CLAUDE.md"
+# --- AGENTS.md ---
+agents_md="$PWD/AGENTS.md"
+agents_line="This project uses muster for multi-agent coordination. Agent definitions are in .opencode/agents/. Persistent memory is in comms/<name>/notes/ and comms/<name>/journal/."
+if [ -f "$agents_md" ]; then
+  if ! grep -qF "muster" "$agents_md"; then
+    echo "" >> "$agents_md"
+    echo "$agents_line" >> "$agents_md"
+    info "Appended muster info to AGENTS.md"
   else
-    info "CLAUDE.md already configured"
+    info "AGENTS.md already has muster info"
   fi
 else
-  echo "$claude_line" > "$claude_md"
-  info "Created CLAUDE.md"
+  echo "$agents_line" > "$agents_md"
+  info "Created AGENTS.md"
 fi
 
 echo ""
 success "Done. $agent_count agent(s) configured for $project_name."
-echo -e "${DIM}Run 'muster start' to launch your team.${RESET}"
+echo -e "${DIM}Agent definitions: .opencode/agents/${RESET}"
+echo -e "${DIM}Agent memory:      comms/<name>/journal/ and comms/<name>/notes/${RESET}"
+echo -e "${DIM}Team config:       comms/team.json${RESET}"
+echo ""
+echo -e "${DIM}Open the project in opencode to start working with your team.${RESET}"
 echo ""

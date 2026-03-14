@@ -8,23 +8,12 @@ TEAM_JSON="$COMMS_DIR/team.json"
 
 project="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['project'])")"
 user_title="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['user_title'])")"
-agent_cli="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['agent_cli'])")"
 
 echo ""
 echo -e "${BOLD}$project${RESET}"
 echo -e "${DIM}$root${RESET}"
 echo ""
-if tmux has-session -t muster 2>/dev/null; then
-  echo -e "  ${BOLD}Status:${RESET} ${GREEN}running${RESET}"
-else
-  echo -e "  ${BOLD}Status:${RESET} ${DIM}stopped${RESET}"
-fi
 echo -e "  ${BOLD}Title:${RESET}  $user_title"
-echo -e "  ${BOLD}CLI:${RESET}    $agent_cli"
-if [ -f "$root/.muster-dashboard-port" ]; then
-  dash_port="$(cat "$root/.muster-dashboard-port")"
-  echo -e "  ${BOLD}Dashboard:${RESET} ${CYAN}http://localhost:${dash_port}${RESET}"
-fi
 echo ""
 echo -e "  ${BOLD}AGENT            MODEL                          ROLE${RESET}"
 echo "  ---------------  -----------------------------  ----------"
@@ -40,18 +29,22 @@ for agent in "${AGENTS[@]}"; do
   [ "$lead" = "True" ] && lead_tag=" ${YELLOW}(lead)${RESET}"
 
   echo -en "  ${BOLD}${agent}${RESET}"
-  # Pad to 17 chars
   padding=$((17 - ${#agent}))
   printf "%${padding}s" ""
   echo -en "${DIM}${model}${RESET}"
-  # Pad model to 31 chars
   model_padding=$((31 - ${#model}))
   printf "%${model_padding}s" ""
   echo -e "${role}${lead_tag}"
   echo -e "  ${DIM}  ${character}${RESET}"
   [ -n "$rules" ] && echo -e "  ${CYAN}  Rules: ${rules}${RESET}"
+
+  # Show journal/notes counts
+  journal_count="$(find "$COMMS_DIR/$agent/journal" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  notes_count="$(find "$COMMS_DIR/$agent/notes" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  echo -e "  ${DIM}  Journal: ${journal_count} entries | Notes: ${notes_count} files${RESET}"
 done
 
 echo ""
-echo -e "  ${BOLD}Board:${RESET}  $(count_md "$COMMS_DIR/board") task file(s)"
+echo -e "  ${BOLD}Agents:${RESET}  .opencode/agents/"
+echo -e "  ${BOLD}Memory:${RESET}  comms/<name>/journal/ and comms/<name>/notes/"
 echo ""

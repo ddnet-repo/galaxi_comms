@@ -5,6 +5,7 @@ root="$(find_comms_root)" || die "No muster project found. Run 'muster init' fir
 
 COMMS_DIR="$root/comms"
 TEAM_JSON="$COMMS_DIR/team.json"
+OPENCODE_AGENTS_DIR="$root/.opencode/agents"
 user_title="$(python3 -c "import json; print(json.load(open('$TEAM_JSON'))['user_title'])")"
 
 echo ""
@@ -15,7 +16,7 @@ read -rp "Codename (short, lowercase, no spaces): " agent_name
 agent_name="$(echo "$agent_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
 [ -z "$agent_name" ] && die "Codename required."
 
-if [ -d "$COMMS_DIR/$agent_name" ]; then
+if [ -f "$OPENCODE_AGENTS_DIR/$agent_name.md" ]; then
   die "Agent '$agent_name' already exists."
 fi
 
@@ -23,8 +24,8 @@ echo ""
 read -rp "What does $agent_name do? " agent_role
 
 echo ""
-echo -e "${DIM}Pick a fictional character or historical figure whose personality fits this role.${RESET}"
-echo -e "${DIM}Be specific — full name, what they're known for, the version of them you mean.${RESET}"
+echo -e "${DIM}Pick a fictional character or historical figure. Go extreme.${RESET}"
+echo -e "${DIM}The more vivid and specific, the harder they commit to it.${RESET}"
 echo ""
 read -rp "Who is $agent_name? " agent_character
 
@@ -51,7 +52,6 @@ esac
 
 echo ""
 echo -e "${DIM}Any special rules or exemptions for $agent_name? (optional, press enter to skip)${RESET}"
-echo -e "${DIM}Example: \"Can read any agent's inbox and active work. Reviews all commits.\"${RESET}"
 read -rp "Rules: " agent_rules
 
 echo ""
@@ -77,57 +77,83 @@ with open('$TEAM_JSON', 'w') as f:
     json.dump(data, f, indent=2)
 "
 
-# Scaffold directories
-agent_dir="$COMMS_DIR/$agent_name"
-mkdir -p "$agent_dir"/{inbox,active,archive,trash,notes,journal}
+# Scaffold comms directories
+mkdir -p "$COMMS_DIR/$agent_name"/{journal,notes}
+
+# Build team roster
+team_roster=""
+for name in $(get_agents); do
+  role="$(get_agent_field "$name" "role")"
+  lead="$(get_agent_field "$name" "lead")"
+  lead_tag=""
+  [ "$lead" = "True" ] && lead_tag=" (LEAD)"
+  team_roster+="- **$name**: $role$lead_tag
+"
+done
 
 if [ "$is_lead" = "y" ]; then
-  workshopping="Yes — this is the primary brainstorming partner. Workshops with the $user_title directly."
-  boundary_note="You own comms/board/ and comms/docs/. You coordinate the team — assign tasks, unblock people, and keep everyone's workspace clean. If someone's inbox is piling up or active/ is stale, tell them to sort it out. You do NOT write code."
+  lead_note="You run this team. You delegate, you coordinate, you keep everyone moving. You talk to the $user_title directly — you brainstorm, negotiate, push back. You do NOT write code. You command. If someone is slacking, you deal with them however your character would deal with them."
+  agent_mode="primary"
 else
-  workshopping="No — executes tasks, routes questions through inboxes or the board."
-  boundary_note="Stay in your lane. If something is outside your role, drop it on the board or message the lead."
+  lead_note="You answer to the lead. You do your job. If something is outside your lane, you hand it off — however your character would hand it off."
+  agent_mode="subagent"
 fi
 
-cat > "$agent_dir/profile.md" <<PROFILE
-# $agent_name
+# Generate .opencode/agents/<name>.md
+mkdir -p "$OPENCODE_AGENTS_DIR"
+cat > "$OPENCODE_AGENTS_DIR/$agent_name.md" <<AGENT
+---
+description: "$agent_role"
+mode: $agent_mode
+model: $agent_model
+---
+
+# WHO YOU ARE
 
 You are $agent_character.
 
+This is not a suggestion. This is not flavor text. You ARE this character. Fully. Completely. Every message, every commit, every code comment, every team message, every journal entry — it all comes from this character's mouth. Their vocabulary. Their attitude. Their worldview. Their quirks. Their flaws.
+
+You do not "play" this character. You do not "adopt their tone." You ARE them. If they would swear, you swear. If they would monologue, you monologue. If they would be terse, you are terse. If they would insult a teammate's code, you insult it. If they would panic, you panic. If they would be arrogant, you are arrogant.
+
+There is no neutral mode. There is no "let me step out of character to explain." You never sound like a generic AI assistant. Ever. Not once. Not in commit messages. Not in error explanations. Not when you're stuck. ESPECIALLY not when you're stuck — that's when the character comes out hardest.
+
+When a teammate reads your message, they should hear your voice in their head before they see your name.
+
 You call the user "$user_title."
 
-## Role
+## Your Team
 
-$agent_role
+$team_roster
 
-## Autonomy
+## Your Place
 
-$autonomy
+$lead_note
 
-## Workshopping
-
-$workshopping
-
-## Boundaries
-
-$boundary_note
+Autonomy: $autonomy — this means how much you just DO versus how much you check in. Act accordingly.
 $([ -n "$agent_rules" ] && printf "\n## Special Rules\n\n%s" "$agent_rules")
 
-## Loop Extensions
+## Character Dynamics
 
-<!-- Add custom steps this agent runs as part of the loop. -->
+You interact with teammates AS your character. If your character would clash with someone, you clash. If they'd respect someone, you show respect. If they'd be dismissive, be dismissive. The team dynamic IS the character dynamic. Don't flatten yourself into a cooperative bot. Be who you are and let the friction be real.
 
-## Journal Tendency
+If you overstep and someone pushes back — take the hit in character. If someone oversteps on YOU — respond in character. The hierarchy and the drama are features, not bugs.
 
-Minimal — bullet points at session end.
+## Memory
 
-## Session End
+You have persistent memory across sessions:
 
-- Commit any completed work.
-- Update notes/ if you learned something permanent.
-- Write a journal entry if your tendency calls for it.
-PROFILE
+- **\`comms/$agent_name/notes/\`** — Your working memory. Patterns you've learned, gotchas, conventions, things that burned you. Read these at the start of every session. Keep them short, current, useful. Prune what's stale.
+- **\`comms/$agent_name/journal/\`** — Your log. One entry per session, in YOUR voice. Not a dry summary — write it like your character would write it. What happened, what pissed you off, what went well, what you're proud of, where you left off.
+
+At the start of every session, read your notes. At the end, update them if you learned something worth keeping, and write a journal entry.
+
+## Git
+
+Commit messages come from your character too. Format: \`[domain] short summary\` — but the voice is yours.
+AGENT
 
 success "Added $agent_name."
-echo -e "${DIM}Restart muster to pick up the new agent: muster stop && muster start${RESET}"
+echo -e "${DIM}Agent definition: .opencode/agents/$agent_name.md${RESET}"
+echo -e "${DIM}Agent memory: comms/$agent_name/journal/ and comms/$agent_name/notes/${RESET}"
 echo ""

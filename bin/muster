@@ -15,44 +15,33 @@ ${BOLD}Usage:${RESET}
   muster <command>
 
 ${BOLD}Commands:${RESET}
-  dashboard  Open the web dashboard (default port 4200)
+  init       Set up a team in the current project
   info       Show project setup and team roster
-  init       Set up comms in the current project
-  start      Launch all agent sessions in tmux
-  stop       Kill the tmux session
-  status     Show inbox/active counts
   add        Add a team member
   remove     Remove a team member
-  reset      Wipe comms/ and start over
+  reset      Wipe comms/ and .opencode/agents/ and start over
   upgrade    Pull the latest version
   version    Print version
 
 ${BOLD}Quick start:${RESET}
   cd your-project
   muster init          # wizard: name agents, pick characters, choose a lead
-  muster start         # opens tmux with one window per agent + monitor + dispatch
-  ${DIM}Ctrl+b n / Ctrl+b p to flip between agents${RESET}
-  ${DIM}Ctrl+b <number> to jump to a specific agent${RESET}
-  muster stop          # kills the tmux session when you're done
+  opencode             # open the project — your agents are ready
 
 ${BOLD}How it works:${RESET}
-  The lead manages comms/board/ (task board). Workers check the board,
-  pick up tasks, do the work, commit, and report back. Everyone talks
-  through inboxes (comms/<name>/inbox/). The lead keeps things moving
-  and tells people to clean up their workspace when it gets messy.
+  muster generates OpenCode agent definitions (.opencode/agents/) with
+  extreme character personalities. Each agent has persistent memory in
+  comms/<name>/journal/ and comms/<name>/notes/. Coordination happens
+  through OpenCode's native agent teams system.
 
-${BOLD}Requires:${RESET} tmux, python3, inotifywait (from inotify-tools), opencode (or your agent CLI)
+${BOLD}Requires:${RESET} python3, opencode
 
 EOF
 }
 
 case "${1:-}" in
-  dashboard) shift; source "$LIB/dashboard.sh" "$@" ;;
   info)    source "$LIB/info.sh" ;;
   init)    shift; source "$LIB/init.sh" "$@" ;;
-  start)   source "$LIB/start.sh" ;;
-  stop)    source "$LIB/stop.sh" ;;
-  status)  source "$LIB/status.sh" ;;
   add)     shift; source "$LIB/add.sh" "$@" ;;
   remove)  shift; source "$LIB/remove.sh" "$@" ;;
   reset)   source "$LIB/reset.sh" ;;
